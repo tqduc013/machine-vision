@@ -1,0 +1,836 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Bảng Điều Khiển PC Control & AOI Machine Vision Công Nghiệp 3D (Live WebSocket)</title>
+  <script src="https://www.gstatic.com/antigravity/web/dev/tailwindcss.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;700;800&family=Inter:wght@400;500;600;700;800&display=swap');
+    
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      background:
+        radial-gradient(ellipse 80% 50% at 50% -10%, rgba(56, 189, 248, 0.12), transparent),
+        radial-gradient(ellipse 60% 40% at 90% 100%, rgba(217, 70, 239, 0.08), transparent),
+        #020617;
+      min-height: 100vh;
+    }
+
+    .font-mono { font-family: 'JetBrains Mono', monospace; }
+
+    h1 {
+      background: linear-gradient(90deg, #38bdf8, #818cf8, #c084fc, #38bdf8);
+      background-size: 250% auto;
+      -webkit-background-clip: text;
+      background-clip: text;
+      -webkit-text-fill-color: transparent;
+      animation: shimmerTitle 6s linear infinite;
+    }
+    @keyframes shimmerTitle { to { background-position: 250% center; } }
+
+    .glass-panel {
+      background: rgba(15, 23, 42, 0.75) !important;
+      backdrop-filter: blur(14px);
+    }
+
+    [data-tilt] {
+      position: relative;
+      transform-style: preserve-3d;
+      will-change: transform;
+      transition: transform 0.45s cubic-bezier(0.22, 0.68, 0.32, 1), box-shadow 0.3s ease;
+    }
+    [data-tilt].tilting { transition: transform 0.06s linear; }
+    .tilt-glare {
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+      border-radius: inherit;
+      background: radial-gradient(circle at var(--gx, 50%) var(--gy, 50%),
+        rgba(255, 255, 255, 0.15), rgba(56, 189, 248, 0.05) 40%, transparent 65%);
+      opacity: 0;
+      transition: opacity 0.3s ease;
+      mix-blend-mode: screen;
+      z-index: 5;
+    }
+
+    .canvas-glow {
+      box-shadow: 0 0 25px rgba(56, 189, 248, 0.12), inset 0 0 40px rgba(0, 0, 0, 0.6);
+    }
+    .scanlines::after {
+      content: "";
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+      background: repeating-linear-gradient(
+        0deg,
+        transparent 0px, transparent 3px,
+        rgba(56, 189, 248, 0.025) 3px, rgba(56, 189, 248, 0.025) 4px
+      );
+    }
+
+    .verdict-pass {
+      border-color: #22c55e !important;
+      background: radial-gradient(circle at center, rgba(34, 197, 94, 0.25) 0%, rgba(15, 23, 42, 0.85) 100%) !important;
+      box-shadow: 0 0 30px rgba(34, 197, 94, 0.3), inset 0 0 20px rgba(34, 197, 94, 0.15);
+    }
+    .verdict-fail {
+      border-color: #ef4444 !important;
+      background: radial-gradient(circle at center, rgba(239, 68, 68, 0.28) 0%, rgba(15, 23, 42, 0.85) 100%) !important;
+      box-shadow: 0 0 30px rgba(239, 68, 68, 0.35), inset 0 0 20px rgba(239, 68, 68, 0.18);
+    }
+
+    ::-webkit-scrollbar { width: 6px; height: 6px; }
+    ::-webkit-scrollbar-track { background: #0f172a; }
+    ::-webkit-scrollbar-thumb { background: #334155; border-radius: 4px; }
+    ::-webkit-scrollbar-thumb:hover { background: #38bdf8; }
+  </style>
+</head>
+<body class="bg-slate-950 text-slate-100 p-2.5 min-h-screen flex flex-col justify-between">
+  
+  <div class="max-w-[1600px] w-full mx-auto space-y-2.5">
+    
+    <!-- Top System Header Bar -->
+    <header class="glass-panel bg-slate-900 border border-slate-800 rounded-xl px-4 py-2.5 shadow-xl flex flex-wrap items-center justify-between gap-2">
+      <div class="flex items-center gap-3">
+        <div class="w-9 h-9 rounded-xl bg-gradient-to-tr from-sky-500 via-indigo-600 to-fuchsia-600 flex items-center justify-center text-lg font-black text-white shadow-md shadow-sky-500/25">
+          MV
+        </div>
+        <div>
+          <div class="flex items-center gap-2">
+            <h1 class="text-base font-black tracking-wider text-white">AOI VISION CONTROLLER <span class="text-[10px] px-2 py-0.5 rounded bg-sky-500/20 text-sky-300 border border-sky-500/30 font-mono">v2.7 LIVE WS</span></h1>
+            <!-- WEBSOCKET STATUS BADGE -->
+            <span id="wsStatusBadge" class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-amber-500/20 text-amber-300 border border-amber-500/30">
+              <span class="w-2 h-2 rounded-full bg-amber-400 animate-ping"></span> CHỜ KẾT NỐI PYTHON BACKEND (:8765)
+            </span>
+          </div>
+          <p class="text-[11px] text-slate-400">Trạm kiểm tra ngoại quan chip Apple A18 Bionic • Băng chuyền cao tốc</p>
+        </div>
+      </div>
+
+      <div class="flex items-center gap-2 text-xs font-mono">
+        <div class="glass-panel bg-slate-950/80 border border-slate-800 px-2.5 py-1 rounded-lg">
+          <span class="text-slate-500 text-[9px]">CAMERA:</span>
+          <span class="text-emerald-400 font-bold text-[11px]">Basler 5MP (GigE)</span>
+        </div>
+        <div class="glass-panel bg-slate-950/80 border border-slate-800 px-2.5 py-1 rounded-lg">
+          <span class="text-slate-500 text-[9px]">PLC SOCKET:</span>
+          <span class="text-sky-400 font-bold text-[11px]">TCP :5000</span>
+        </div>
+        <div class="glass-panel bg-slate-950/80 border border-slate-800 px-2.5 py-1 rounded-lg">
+          <span class="text-slate-500 text-[9px]">TIME:</span>
+          <span id="clock" class="text-amber-400 font-bold text-[11px]">00:00:00</span>
+        </div>
+      </div>
+    </header>
+
+    <!-- Main Workspace Grid -->
+    <div class="grid grid-cols-1 lg:grid-cols-12 gap-2.5">
+      
+      <!-- LEFT: Viewports (7 Cols) -->
+      <div class="lg:col-span-7 flex flex-col gap-2.5">
+        
+        <!-- Controls Buttons Bar -->
+        <div class="glass-panel bg-slate-900 border border-slate-800 rounded-xl p-2.5 flex items-center justify-between gap-2 shadow-lg">
+          <div class="flex items-center gap-2 flex-1">
+            <button onclick="triggerManualInspect()" id="btnManualTrigger" data-tilt="4" class="flex-1 py-2.5 px-3 rounded-lg font-bold text-xs bg-gradient-to-r from-sky-600 to-blue-600 hover:from-sky-500 hover:to-blue-500 text-white shadow-md shadow-sky-600/30 flex items-center justify-center gap-1.5 transition active:scale-95">
+              <span>⚡</span> <span>BẤM TRIGGER THỦ CÔNG</span>
+            </button>
+            
+            <button onclick="toggleAutoRun()" id="btnAutoRun" data-tilt="4" class="flex-1 py-2.5 px-3 rounded-lg font-bold text-xs bg-emerald-600 hover:bg-emerald-500 text-white shadow-md shadow-emerald-600/30 flex items-center justify-center gap-1.5 transition active:scale-95">
+              <span id="autoIcon">▶</span> <span id="autoText">BĂNG CHUYỀN TỰ ĐỘNG</span>
+            </button>
+          </div>
+
+          <div class="flex items-center gap-1.5">
+            <button onclick="toggleOverlay()" id="btnOverlay" class="text-xs font-medium px-2.5 py-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 transition">
+              Bật/Tắt ROI
+            </button>
+            <button onclick="openResetModal()" class="text-xs font-medium px-2.5 py-2 rounded-lg bg-rose-950/40 hover:bg-rose-900/60 text-rose-300 border border-rose-800/60 transition active:scale-95" title="Reset số liệu ca">
+              ⚠️ Reset Ca
+            </button>
+          </div>
+        </div>
+
+        <!-- 2 Viewports Side-by-Side -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-2.5">
+          
+          <!-- Viewport 1: 3D Digital Twin -->
+          <div class="glass-panel bg-slate-900 border border-slate-800 rounded-xl p-2.5 flex flex-col">
+            <div class="flex items-center justify-between mb-1.5">
+              <div class="flex items-center gap-1.5">
+                <span class="w-2 h-2 rounded-full bg-cyan-400 animate-ping"></span>
+                <span class="text-[11px] font-bold uppercase tracking-wide text-slate-200">Trạm Vision 3D (Digital Twin)</span>
+              </div>
+              <span class="text-[9px] font-mono text-cyan-300 bg-cyan-500/10 border border-cyan-500/20 px-1.5 py-0.5 rounded">
+                🖱️ KÉO XOAY 3D
+              </span>
+            </div>
+
+            <div class="canvas-glow scanlines relative w-full aspect-[4/3] bg-slate-950 rounded-lg overflow-hidden border border-slate-800 flex items-center justify-center">
+              <div id="station3d" class="w-full h-full"></div>
+              <div id="laserTriggerEffect" class="absolute inset-0 bg-sky-400/20 opacity-0 pointer-events-none transition-opacity duration-100"></div>
+            </div>
+          </div>
+
+          <!-- Viewport 2: 2D Sensor Feed -->
+          <div class="glass-panel bg-slate-900 border border-slate-800 rounded-xl p-2.5 flex flex-col">
+            <div class="flex items-center justify-between mb-1.5">
+              <div class="flex items-center gap-1.5">
+                <span class="w-2 h-2 rounded-full bg-emerald-400"></span>
+                <span class="text-[11px] font-bold uppercase tracking-wide text-slate-200">Ảnh Sensor Camera (4G Pipeline)</span>
+              </div>
+              <span id="resolutionBadge" class="text-[9px] font-mono text-slate-400 bg-slate-950 px-1.5 py-0.5 rounded border border-slate-800">
+                1200µs • 0.1mm/px
+              </span>
+            </div>
+
+            <div class="canvas-glow relative w-full aspect-[4/3] bg-black rounded-lg overflow-hidden border border-slate-800 flex items-center justify-center">
+              <canvas id="cameraCanvas" width="640" height="480" class="w-full h-full object-contain"></canvas>
+              <div id="scanEffect" class="absolute inset-0 scanline pointer-events-none opacity-0 transition-opacity duration-150"></div>
+            </div>
+          </div>
+
+        </div>
+
+      </div>
+
+      <!-- RIGHT: Verdict Display, Live KPI Analytics & PLC Log (5 Cols) -->
+      <div class="lg:col-span-5 flex flex-col gap-2.5">
+        
+        <!-- Verdict Box -->
+        <div data-tilt="4" class="glass-panel bg-slate-900 border border-slate-800 rounded-xl p-3 shadow-xl">
+          <div class="text-[11px] font-bold uppercase tracking-wider text-slate-400 mb-1.5 flex items-center justify-between">
+            <span>KẾT QUẢ PHÁN QUYẾT TỨC THÌ (VERDICT)</span>
+            <span id="decisionTimestamp" class="text-[10px] font-mono text-slate-500">READY</span>
+          </div>
+
+          <div id="verdictBox" class="h-24 rounded-lg flex items-center justify-center border-2 verdict-pass transition-all duration-200">
+            <div class="text-center">
+              <div id="verdictText" class="text-4xl font-black tracking-widest text-emerald-400">
+                PASS (OK)
+              </div>
+              <div id="verdictSub" class="text-[11px] font-mono font-bold text-emerald-300 mt-0.5">
+                KÍCH THƯỚC ĐẠT • QR CODE HỢP LỆ • KHÔNG VẾT XƯỚC
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Real-Time Production KPI Analytics Cards -->
+        <div class="grid grid-cols-2 gap-2">
+          <div data-tilt="4" class="glass-panel bg-slate-900 border border-slate-800 rounded-lg p-2.5">
+            <div class="text-[10px] font-semibold text-slate-400">TỔNG SẢN PHẨM (TOTAL)</div>
+            <div id="statTotal" class="text-xl font-black text-white font-mono mt-0.5">0</div>
+          </div>
+
+          <div data-tilt="4" class="glass-panel bg-slate-900 border border-slate-800 rounded-lg p-2.5">
+            <div class="text-[10px] font-semibold text-slate-400">TỶ LỆ ĐẠT (YIELD RATE)</div>
+            <div id="statYield" class="text-xl font-black text-emerald-400 font-mono mt-0.5">100.0%</div>
+          </div>
+
+          <div data-tilt="4" class="glass-panel bg-slate-900 border border-slate-800 rounded-lg p-2.5">
+            <div class="text-[10px] font-semibold text-slate-400 flex items-center justify-between">
+              <span>HÀNG ĐẠT (OK)</span>
+              <span class="w-1.5 h-1.5 rounded-full bg-emerald-400"></span>
+            </div>
+            <div id="statOk" class="text-lg font-bold text-emerald-400 font-mono mt-0.5">0</div>
+          </div>
+
+          <div data-tilt="4" class="glass-panel bg-slate-900 border border-slate-800 rounded-lg p-2.5">
+            <div class="text-[10px] font-semibold text-slate-400 flex items-center justify-between">
+              <span>HÀNG LỖI (NG)</span>
+              <span class="w-1.5 h-1.5 rounded-full bg-rose-400"></span>
+            </div>
+            <div id="statNg" class="text-lg font-bold text-rose-400 font-mono mt-0.5">0</div>
+          </div>
+        </div>
+
+        <!-- Cycle Time & UPH -->
+        <div class="glass-panel bg-slate-900 border border-slate-800 rounded-lg px-3 py-2 flex items-center justify-between text-xs font-mono">
+          <div>
+            <span class="text-slate-400 block text-[9px]">CYCLE TIME (MS):</span>
+            <span id="statCycleTime" class="text-cyan-400 font-bold text-sm">8.42 ms</span>
+          </div>
+          <div class="text-right">
+            <span class="text-slate-400 block text-[9px]">TỐC ĐỘ (UPH):</span>
+            <span id="statUph" class="text-amber-400 font-bold text-sm">4,280 SP/Giờ</span>
+          </div>
+        </div>
+
+        <!-- PLC Handshake Terminal -->
+        <div class="glass-panel bg-slate-900 border border-slate-800 rounded-lg p-2.5 flex-1 flex flex-col justify-between">
+          <div class="flex items-center justify-between pb-1 border-b border-slate-800 mb-1">
+            <span class="text-[10px] font-bold text-slate-200 flex items-center gap-1.5">
+              <span class="w-1.5 h-1.5 rounded-full bg-sky-400 animate-pulse"></span>
+              PLC & WEBSOCKET HANDSHAKE LOG
+            </span>
+            <span class="text-[9px] font-mono text-slate-500">WS: 127.0.0.1:8765</span>
+          </div>
+
+          <div id="plcLogBox" class="h-28 bg-black/90 rounded p-2 font-mono text-[10px] overflow-y-auto space-y-0.5 text-slate-300 border border-slate-800">
+            <div class="text-slate-500">[SYSTEM] Dashboard initialized. Connecting to Python WebSocket...</div>
+          </div>
+        </div>
+
+      </div>
+
+    </div>
+
+    <!-- Bottom 4-Layer Architecture -->
+    <div class="glass-panel bg-slate-900 border border-slate-800 rounded-xl p-3 shadow-lg">
+      <div class="text-xs font-bold text-white mb-2 flex items-center gap-1.5">
+        <span>🏗️</span> <span>KIẾN TRÚC PHẦN MỀM PC CONTROL CÔNG NGHIỆP (4 TẦNG MULTI-THREADING)</span>
+      </div>
+
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2 text-xs">
+        <div data-tilt="4" class="p-2.5 rounded-lg bg-slate-950/80 border border-slate-800">
+          <div class="text-[9px] font-mono font-bold text-sky-400">1. CAMERA GRABBER</div>
+          <p class="text-slate-400 text-[10px] mt-0.5">Bắt Hardware Trigger $\to$ Bắn ảnh vào RAM Ring Buffer.</p>
+        </div>
+        <div data-tilt="4" class="p-2.5 rounded-lg bg-slate-950/80 border border-slate-800">
+          <div class="text-[9px] font-mono font-bold text-emerald-400">2. WORKER POOL 4G</div>
+          <p class="text-slate-400 text-[10px] mt-0.5">Đa luồng ngầm xoay thẳng, đọc QR, đo đạc, soi xước trong 3-10ms.</p>
+        </div>
+        <div data-tilt="4" class="p-2.5 rounded-lg bg-slate-950/80 border border-slate-800">
+          <div class="text-[9px] font-mono font-bold text-amber-400">3. PLC I/O COMM</div>
+          <p class="text-slate-400 text-[10px] mt-0.5">Socket TCP/IP gửi tín hiệu kích hoạt xi-lanh gạt hàng NG.</p>
+        </div>
+        <div data-tilt="4" class="p-2.5 rounded-lg bg-slate-950/80 border border-slate-800">
+          <div class="text-[9px] font-mono font-bold text-purple-400">4. UI DASHBOARD</div>
+          <p class="text-slate-400 text-[10px] mt-0.5">WebSocket nhận Event render giao diện, không tính toán để tránh lag.</p>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- WARNING CONFIRMATION MODAL -->
+  <div id="resetModal" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center hidden">
+    <div class="bg-slate-900 border border-slate-800 rounded-2xl p-5 max-w-md w-full mx-4 shadow-2xl space-y-4">
+      <div class="flex items-center gap-3 text-rose-400">
+        <span class="text-3xl">⚠️</span>
+        <div>
+          <h3 class="text-base font-bold text-white">XÁC NHẬN RESET SỐ LIỆU CA SẢN XUẤT?</h3>
+          <p class="text-xs text-slate-400">Hành động này sẽ đưa Total, OK, NG về 0 và lưu trữ bản ghi cũ vào Database.</p>
+        </div>
+      </div>
+
+      <div class="bg-slate-950 p-3 rounded-xl border border-slate-800 text-xs font-mono text-slate-300 space-y-1">
+        <div>📊 Số lượng hiện tại: <span id="modalTotal" class="text-white font-bold">0</span> sp</div>
+        <div>✓ Đạt chuẩn (OK): <span id="modalOk" class="text-emerald-400 font-bold">0</span> sp</div>
+        <div>✗ Phế phẩm (NG): <span id="modalNg" class="text-rose-400 font-bold">0</span> sp</div>
+        <div class="text-[10px] text-amber-400 pt-1">💡 Hệ thống đã tự động backup số liệu ca này vào file CSV.</div>
+      </div>
+
+      <div class="flex items-center justify-end gap-2 pt-2">
+        <button onclick="closeResetModal()" class="px-4 py-2 rounded-lg text-xs font-medium bg-slate-800 hover:bg-slate-700 text-slate-200 transition">
+          Hủy Bỏ
+        </button>
+        <button onclick="confirmReset()" class="px-4 py-2 rounded-lg text-xs font-bold bg-rose-600 hover:bg-rose-500 text-white shadow-lg shadow-rose-600/30 transition">
+          Xác Nhận Reset Về 0
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    let totalCount = 0;
+    let okCount = 0;
+    let ngCount = 0;
+    let autoRunActive = false;
+    let autoRunTimer = null;
+    let showOverlay = true;
+    let wsConnected = false;
+
+    const cameraCanvas = document.getElementById('cameraCanvas');
+    const ctx = cameraCanvas.getContext('2d');
+
+    // Default sample for initial render / offline fallback
+    let currentSample = {
+      id: "101",
+      angle: 0,
+      serial: "SN-APPLE-A18-PRO-8891",
+      width: 220.0,
+      height: 140.0,
+      hasScratch: false,
+      hasChipOff: false,
+      isOk: true,
+      verdict: "PASS (OK)",
+      reason: "KÍCH THƯỚC ĐẠT • QR CODE HỢP LỆ • KHÔNG VẾT XƯỚC"
+    };
+
+    setInterval(() => {
+      const now = new Date();
+      document.getElementById('clock').innerText = now.toTimeString().split(' ')[0];
+    }, 1000);
+
+    function appendPlcLog(msg, type = "normal") {
+      const logBox = document.getElementById('plcLogBox');
+      const now = new Date().toTimeString().split(' ')[0];
+      const div = document.createElement('div');
+      
+      if (type === "ok") {
+        div.className = "text-emerald-400";
+        div.innerText = `[${now}] ${msg}`;
+      } else if (type === "ng") {
+        div.className = "text-rose-400 font-bold";
+        div.innerText = `[${now}] ${msg}`;
+      } else if (type === "trigger") {
+        div.className = "text-sky-300";
+        div.innerText = `[${now}] ${msg}`;
+      } else {
+        div.className = "text-slate-400";
+        div.innerText = `[${now}] ${msg}`;
+      }
+      
+      logBox.appendChild(div);
+      logBox.scrollTop = logBox.scrollHeight;
+    }
+
+    // ==========================================
+    // WEBSOCKET REAL-TIME CLIENT
+    // ==========================================
+    function initWebSocket() {
+      const wsStatusBadge = document.getElementById('wsStatusBadge');
+      
+      try {
+        const ws = new WebSocket("ws://127.0.0.1:8765");
+
+        ws.onopen = () => {
+          wsConnected = true;
+          wsStatusBadge.className = "inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-emerald-500/20 text-emerald-400 border border-emerald-500/30";
+          wsStatusBadge.innerHTML = '<span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span> LIVE PYTHON BACKEND (:8765)';
+          appendPlcLog("WebSocket connected to Python Vision Backend!", "ok");
+        };
+
+        ws.onmessage = (event) => {
+          try {
+            const data = JSON.parse(event.data);
+            if (data.type === "INSPECTION_RESULT") {
+              handleLiveInspectionEvent(data);
+            } else if (data.type === "SYSTEM_STATUS") {
+              appendPlcLog(`Python Backend Online: Total=${data.stats.total} Yield=${data.stats.yieldRate}%`, "ok");
+            }
+          } catch (err) {
+            console.error("WS parse error:", err);
+          }
+        };
+
+        ws.onclose = () => {
+          wsConnected = false;
+          wsStatusBadge.className = "inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-amber-500/20 text-amber-300 border border-amber-500/30";
+          wsStatusBadge.innerHTML = '<span class="w-2 h-2 rounded-full bg-amber-400"></span> STANDALONE SIMULATION';
+          setTimeout(initWebSocket, 3000); // Tự động reconnect sau 3 giây
+        };
+
+        ws.onerror = () => {
+          ws.close();
+        };
+
+      } catch (e) {
+        setTimeout(initWebSocket, 3000);
+      }
+    }
+
+    // Xử lý gói tin thực tế từ Python gửi sang
+    function handleLiveInspectionEvent(data) {
+      // 1. Flash laser
+      laserCone.material.opacity = 0.65;
+      document.getElementById('laserTriggerEffect').style.opacity = '1';
+      document.getElementById('scanEffect').style.opacity = '1';
+      setTimeout(() => {
+        laserCone.material.opacity = 0.18;
+        document.getElementById('laserTriggerEffect').style.opacity = '0';
+        document.getElementById('scanEffect').style.opacity = '0';
+      }, 200);
+
+      // 2. Cập nhật thống kê thực từ Python
+      totalCount = data.stats.total;
+      okCount = data.stats.ok;
+      ngCount = data.stats.ng;
+      document.getElementById('statTotal').innerText = totalCount;
+      document.getElementById('statOk').innerText = okCount;
+      document.getElementById('statNg').innerText = ngCount;
+      document.getElementById('statYield').innerText = `${data.stats.yieldRate}%`;
+      document.getElementById('statCycleTime').innerText = `${data.cycleTimeMs} ms`;
+
+      if (parseFloat(data.stats.yieldRate) < 95.0) {
+        document.getElementById('statYield').className = "text-xl font-black text-rose-400 font-mono mt-0.5";
+      } else {
+        document.getElementById('statYield').className = "text-xl font-black text-emerald-400 font-mono mt-0.5";
+      }
+
+      // 3. Verdict
+      const isOk = (data.status === "OK");
+      const verdictBox = document.getElementById('verdictBox');
+      const verdictText = document.getElementById('verdictText');
+      const verdictSub = document.getElementById('verdictSub');
+      document.getElementById('decisionTimestamp').innerText = `LAST: ${data.timestamp}`;
+
+      if (isOk) {
+        verdictBox.className = "h-24 rounded-lg flex items-center justify-center border-2 verdict-pass transition-all duration-200";
+        verdictText.className = "text-4xl font-black tracking-widest text-emerald-400";
+        verdictText.innerText = "PASS (OK)";
+        verdictSub.className = "text-[11px] font-mono font-bold text-emerald-300 mt-0.5";
+        verdictSub.innerText = "KÍCH THƯỚC ĐẠT • QR SERIAL HỢP LỆ • KHÔNG LỖI NGOẠI QUAN";
+
+        chipMesh3D.material.color.setHex(0x22c55e);
+        appendPlcLog(`TRIGGER IN #${data.prodId} -> Python 4G (${data.cycleTimeMs}ms) -> RESULT: OK -> PLC Bit Y0=1`, "ok");
+      } else {
+        verdictBox.className = "h-24 rounded-lg flex items-center justify-center border-2 verdict-fail transition-all duration-200";
+        verdictText.className = "text-4xl font-black tracking-widest text-rose-400";
+        verdictText.innerText = `FAIL (NG - ${data.reason})`;
+        verdictSub.className = "text-[11px] font-mono font-bold text-rose-300 mt-0.5";
+        verdictSub.innerText = `PHÁT HIỆN LỖI: ${data.reason} (KÍCH THƯỚC: ${data.width}x${data.height}px)`;
+
+        chipMesh3D.material.color.setHex(0xef4444);
+        triggerPistonAnimation();
+        appendPlcLog(`TRIGGER IN #${data.prodId} -> Python 4G (${data.cycleTimeMs}ms) -> RESULT: NG -> ⚠️ ACTUATOR REJECT [Bit Y1=1]`, "ng");
+      }
+
+      // 4. Xoay chip 3D đúng góc thực tế từ Python
+      chipMesh3D.rotation.y = -(data.angle * Math.PI) / 180;
+
+      // 5. Vẽ ảnh 2D
+      currentSample = {
+        id: data.prodId,
+        angle: data.angle,
+        serial: data.serial,
+        width: data.width,
+        height: data.height,
+        hasScratch: data.hasScratch,
+        hasChipOff: data.hasChipOff,
+        isOk: isOk
+      };
+      drawChipInspection(currentSample);
+    }
+
+    // ================= THREE.JS 3D =================
+    const station3dEl = document.getElementById('station3d');
+    const scene = new THREE.Scene();
+    scene.background = new THREE.Color(0x050811);
+
+    const camera3d = new THREE.PerspectiveCamera(45, station3dEl.clientWidth / station3dEl.clientHeight, 0.1, 100);
+    camera3d.position.set(3.2, 2.8, 3.8);
+
+    const renderer3d = new THREE.WebGLRenderer({ antialias: true });
+    renderer3d.setSize(station3dEl.clientWidth, station3dEl.clientHeight);
+    renderer3d.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+    station3dEl.appendChild(renderer3d.domElement);
+
+    const controls = new THREE.OrbitControls(camera3d, renderer3d.domElement);
+    controls.enableDamping = true;
+    controls.dampingFactor = 0.05;
+    controls.target.set(0, 0.6, 0);
+
+    scene.add(new THREE.AmbientLight(0xffffff, 0.65));
+    const dirLight = new THREE.DirectionalLight(0x38bdf8, 1.2);
+    dirLight.position.set(3, 6, 4);
+    scene.add(dirLight);
+
+    const grid = new THREE.GridHelper(10, 20, 0x38bdf8, 0x1e293b);
+    scene.add(grid);
+
+    const conveyorMesh = new THREE.Mesh(
+      new THREE.BoxGeometry(6.5, 0.15, 1.2),
+      new THREE.MeshStandardMaterial({ color: 0x1e293b, roughness: 0.6, metalness: 0.5 })
+    );
+    conveyorMesh.position.set(0, 0.5, 0);
+    scene.add(conveyorMesh);
+
+    const frameMat = new THREE.MeshStandardMaterial({ color: 0x475569, metalness: 0.8, roughness: 0.3 });
+    const poleL = new THREE.Mesh(new THREE.CylinderGeometry(0.04, 0.04, 2.2), frameMat);
+    poleL.position.set(-0.8, 1.6, -0.7);
+    scene.add(poleL);
+
+    const poleR = new THREE.Mesh(new THREE.CylinderGeometry(0.04, 0.04, 2.2), frameMat);
+    poleR.position.set(0.8, 1.6, -0.7);
+    scene.add(poleR);
+
+    const crossBar = new THREE.Mesh(new THREE.BoxGeometry(1.8, 0.06, 0.06), frameMat);
+    crossBar.position.set(0, 2.6, -0.7);
+    scene.add(crossBar);
+
+    const armBar = new THREE.Mesh(new THREE.BoxGeometry(0.06, 0.06, 0.8), frameMat);
+    armBar.position.set(0, 2.6, -0.3);
+    scene.add(armBar);
+
+    const camBody = new THREE.Mesh(
+      new THREE.BoxGeometry(0.35, 0.45, 0.35),
+      new THREE.MeshStandardMaterial({ color: 0x0284c7, metalness: 0.7, roughness: 0.3 })
+    );
+    camBody.position.set(0, 2.3, 0);
+    scene.add(camBody);
+
+    const lens = new THREE.Mesh(
+      new THREE.CylinderGeometry(0.12, 0.14, 0.35, 16),
+      new THREE.MeshStandardMaterial({ color: 0x0f172a, metalness: 0.9 })
+    );
+    lens.position.set(0, 1.95, 0);
+    scene.add(lens);
+
+    const domeLightRing = new THREE.Mesh(
+      new THREE.TorusGeometry(0.4, 0.08, 12, 24),
+      new THREE.MeshStandardMaterial({ color: 0xa855f7, emissive: 0x581c87, roughness: 0.2 })
+    );
+    domeLightRing.rotation.x = Math.PI / 2;
+    domeLightRing.position.set(0, 1.65, 0);
+    scene.add(domeLightRing);
+
+    const chipMesh3D = new THREE.Mesh(
+      new THREE.BoxGeometry(0.7, 0.05, 0.45),
+      new THREE.MeshStandardMaterial({ color: 0x94a3b8, metalness: 0.85, roughness: 0.2 })
+    );
+    chipMesh3D.position.set(0, 0.62, 0);
+    scene.add(chipMesh3D);
+
+    const laserCone = new THREE.Mesh(
+      new THREE.ConeGeometry(0.45, 1.3, 16, 1, true),
+      new THREE.MeshBasicMaterial({ color: 0x38bdf8, transparent: true, opacity: 0.18, side: THREE.DoubleSide })
+    );
+    laserCone.position.set(0, 1.3, 0);
+    scene.add(laserCone);
+
+    const pistonBase = new THREE.Mesh(new THREE.BoxGeometry(0.2, 0.2, 0.4), new THREE.MeshStandardMaterial({ color: 0xe11d48 }));
+    pistonBase.position.set(1.5, 0.65, -0.7);
+    scene.add(pistonBase);
+
+    const pistonRod = new THREE.Mesh(new THREE.CylinderGeometry(0.03, 0.03, 0.4), new THREE.MeshStandardMaterial({ color: 0xffffff, metalness: 0.9 }));
+    pistonRod.rotation.x = Math.PI / 2;
+    pistonRod.position.set(1.5, 0.65, -0.4);
+    scene.add(pistonRod);
+
+    function triggerPistonAnimation() {
+      pistonRod.position.z = -0.15;
+      setTimeout(() => { pistonRod.position.z = -0.4; }, 300);
+    }
+
+    // Offline manual inspection trigger
+    function triggerManualInspect() {
+      const mockSample = {
+        prodId: Math.floor(100 + Math.random() * 900),
+        serial: `SN-APPLE-A18-PRO-${Math.floor(1000 + Math.random() * 9000)}`,
+        width: 220,
+        height: 140,
+        angle: Math.floor((Math.random() - 0.5) * 60),
+        status: Math.random() > 0.3 ? "OK" : "NG",
+        reason: Math.random() > 0.3 ? "PASSED" : "SCRATCH_NG",
+        hasScratch: Math.random() < 0.3,
+        hasChipOff: Math.random() < 0.15,
+        cycleTimeMs: (7.5 + Math.random() * 4).toFixed(2),
+        timestamp: new Date().toTimeString().split(' ')[0],
+        stats: {
+          total: totalCount + 1,
+          ok: okCount + (Math.random() > 0.3 ? 1 : 0),
+          ng: ngCount + (Math.random() <= 0.3 ? 1 : 0),
+          yieldRate: (((okCount + 1) / (totalCount + 1)) * 100).toFixed(1)
+        }
+      };
+      handleLiveInspectionEvent(mockSample);
+    }
+
+    function drawChipInspection(sample) {
+      ctx.fillStyle = "#090d16";
+      ctx.fillRect(0, 0, 640, 480);
+
+      ctx.strokeStyle = "rgba(255,255,255,0.04)";
+      ctx.lineWidth = 1;
+      for (let x = 0; x < 640; x += 32) {
+        ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, 480); ctx.stroke();
+      }
+      for (let y = 0; y < 480; y += 32) {
+        ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(640, y); ctx.stroke();
+      }
+
+      ctx.save();
+      ctx.translate(320, 240);
+      ctx.rotate((sample.angle * Math.PI) / 180);
+
+      const w = sample.width * 1.3;
+      const h = sample.height * 1.3;
+
+      const chipGrad = ctx.createLinearGradient(-w/2, -h/2, w/2, h/2);
+      chipGrad.addColorStop(0, "#e2e8f0");
+      chipGrad.addColorStop(1, "#94a3b8");
+      ctx.fillStyle = chipGrad;
+      ctx.beginPath();
+      ctx.roundRect(-w/2, -h/2, w, h, 8);
+      ctx.fill();
+
+      ctx.fillStyle = "#0f172a";
+      ctx.font = "bold 16px Inter, sans-serif";
+      ctx.textAlign = "center";
+      ctx.fillText("A18 PRO BIONIC", 0, -h/2 + 35);
+      ctx.font = "10px Inter, sans-serif";
+      ctx.fillText(sample.serial, 0, -h/2 + 55);
+
+      ctx.fillStyle = "#0f172a";
+      ctx.fillRect(-45, -15, 90, 90);
+      ctx.fillStyle = "#ffffff";
+      ctx.fillRect(-40, -10, 24, 24);
+      ctx.fillRect(16, -10, 24, 24);
+      ctx.fillRect(-40, 46, 24, 24);
+      ctx.fillStyle = "#0f172a";
+      ctx.fillRect(-35, -5, 14, 14);
+      ctx.fillRect(21, -5, 14, 14);
+      ctx.fillRect(-35, 51, 14, 14);
+
+      if (sample.hasScratch) {
+        ctx.strokeStyle = "#ef4444";
+        ctx.lineWidth = 3.5;
+        ctx.beginPath();
+        ctx.moveTo(-90, -20); ctx.lineTo(-20, 15); ctx.lineTo(60, -35);
+        ctx.stroke();
+      }
+
+      if (sample.hasChipOff) {
+        ctx.fillStyle = "#090d16";
+        ctx.beginPath();
+        ctx.moveTo(w/2 - 25, -h/2); ctx.lineTo(w/2, -h/2 + 25); ctx.lineTo(w/2, -h/2);
+        ctx.fill();
+        ctx.strokeStyle = "#ef4444";
+        ctx.lineWidth = 2;
+        ctx.strokeRect(w/2 - 35, -h/2 - 5, 40, 40);
+      }
+
+      ctx.restore();
+
+      if (showOverlay) {
+        ctx.save();
+        ctx.translate(320, 240);
+
+        ctx.strokeStyle = "rgba(56, 189, 248, 0.4)";
+        ctx.lineWidth = 1;
+        ctx.beginPath();
+        ctx.moveTo(-180, 0); ctx.lineTo(180, 0);
+        ctx.moveTo(0, -140); ctx.lineTo(0, 140);
+        ctx.stroke();
+
+        ctx.rotate((sample.angle * Math.PI) / 180);
+        ctx.strokeStyle = sample.isOk ? "#10b981" : "#ef4444";
+        ctx.lineWidth = 2;
+        ctx.strokeRect(-w/2 - 8, -h/2 - 8, w + 16, h + 16);
+
+        ctx.fillStyle = sample.isOk ? "#10b981" : "#ef4444";
+        ctx.font = "bold 11px monospace";
+        ctx.textAlign = "center";
+        ctx.fillText(`W: ${(sample.width * 0.1).toFixed(2)}mm [${sample.width > 225 ? "NG" : "OK"}]`, 0, -h/2 - 14);
+        ctx.fillText(`H: ${(sample.height * 0.1).toFixed(2)}mm [OK]`, -w/2 - 38, 0);
+        ctx.fillText(`Angle θ: ${sample.angle}°`, 0, h/2 + 25);
+
+        ctx.restore();
+      }
+    }
+
+    function toggleAutoRun() {
+      autoRunActive = !autoRunActive;
+      const btn = document.getElementById('btnAutoRun');
+      const icon = document.getElementById('autoIcon');
+      const text = document.getElementById('autoText');
+
+      if (autoRunActive) {
+        btn.className = "flex-1 py-2.5 px-3 rounded-lg font-bold text-xs bg-rose-600 hover:bg-rose-500 text-white shadow-md shadow-rose-600/30 flex items-center justify-center gap-1.5 transition active:scale-95";
+        icon.innerText = "⏸";
+        text.innerText = "DỪNG BĂNG CHUYỀN";
+        appendPlcLog("CONVEYOR AUTO-RUN STARTED.", "trigger");
+        triggerManualInspect();
+        autoRunTimer = setInterval(() => { triggerManualInspect(); }, 1400);
+      } else {
+        btn.className = "flex-1 py-2.5 px-3 rounded-lg font-bold text-xs bg-emerald-600 hover:bg-emerald-500 text-white shadow-md shadow-emerald-600/30 flex items-center justify-center gap-1.5 transition active:scale-95";
+        icon.innerText = "▶";
+        text.innerText = "BĂNG CHUYỀN TỰ ĐỘNG";
+        clearInterval(autoRunTimer);
+        appendPlcLog("CONVEYOR AUTO-RUN STOPPED.", "normal");
+      }
+    }
+
+    function toggleOverlay() {
+      showOverlay = !showOverlay;
+      document.getElementById('btnOverlay').innerText = showOverlay ? "Tắt ROI" : "Bật ROI";
+      drawChipInspection(currentSample);
+    }
+
+    function openResetModal() {
+      document.getElementById('modalTotal').innerText = totalCount;
+      document.getElementById('modalOk').innerText = okCount;
+      document.getElementById('modalNg').innerText = ngCount;
+      document.getElementById('resetModal').classList.remove('hidden');
+    }
+
+    function closeResetModal() {
+      document.getElementById('resetModal').classList.add('hidden');
+    }
+
+    function confirmReset() {
+      totalCount = 0;
+      okCount = 0;
+      ngCount = 0;
+      document.getElementById('statTotal').innerText = "0";
+      document.getElementById('statOk').innerText = "0";
+      document.getElementById('statNg').innerText = "0";
+      document.getElementById('statYield').innerText = "100.0%";
+      document.getElementById('statYield').className = "text-xl font-black text-emerald-400 font-mono mt-0.5";
+      document.getElementById('plcLogBox').innerHTML = '<div class="text-amber-400">[SYSTEM] Production shift counters reset to 0.</div>';
+      closeResetModal();
+    }
+
+    function attachTilt(el, maxDeg) {
+      const glare = document.createElement('div');
+      glare.className = 'tilt-glare';
+      el.appendChild(glare);
+
+      el.addEventListener('mousemove', (e) => {
+        const r = el.getBoundingClientRect();
+        const px = (e.clientX - r.left) / r.width;
+        const py = (e.clientY - r.top) / r.height;
+        el.classList.add('tilting');
+        el.style.transform =
+          `perspective(900px) rotateX(${((0.5 - py) * maxDeg * 2).toFixed(2)}deg)` +
+          ` rotateY(${((px - 0.5) * maxDeg * 2).toFixed(2)}deg) translateZ(6px)`;
+        glare.style.setProperty('--gx', (px * 100).toFixed(1) + '%');
+        glare.style.setProperty('--gy', (py * 100).toFixed(1) + '%');
+        glare.style.opacity = '1';
+      });
+
+      el.addEventListener('mouseleave', () => {
+        el.classList.remove('tilting');
+        el.style.transform = '';
+        glare.style.opacity = '0';
+      });
+    }
+
+    document.querySelectorAll('[data-tilt]').forEach(el => {
+      attachTilt(el, parseFloat(el.getAttribute('data-tilt')) || 4);
+    });
+
+    function resize3D() {
+      const w = station3dEl.clientWidth, h = station3dEl.clientHeight;
+      if (!w || !h) return;
+      camera3d.aspect = w / h;
+      camera3d.updateProjectionMatrix();
+      renderer3d.setSize(w, h);
+    }
+    window.addEventListener('resize', resize3D);
+
+    function render3DLoop() {
+      const w = station3dEl.clientWidth, h = station3dEl.clientHeight;
+      if (w && h && (renderer3d.domElement.width !== Math.round(w * (window.devicePixelRatio || 1)))) {
+        renderer3d.setSize(w, h);
+        camera3d.aspect = w / h;
+        camera3d.updateProjectionMatrix();
+      }
+      controls.update();
+      renderer3d.render(scene, camera3d);
+      requestAnimationFrame(render3DLoop);
+    }
+
+    resize3D();
+    render3DLoop();
+    drawChipInspection(currentSample);
+    initWebSocket();
+  </script>
+</body>
+</html>

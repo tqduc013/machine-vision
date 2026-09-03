@@ -1,0 +1,18 @@
+# .NET / C# build outputs
+**/bin/
+**/obj/
+*.user
+*.suo
+.vs/
+.vscode/
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.env
+venv/
+.venv/
+
+# Local crash logs
+*.log

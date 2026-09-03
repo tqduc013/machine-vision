@@ -1,0 +1,1561 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Mô Phỏng Quang Học & 5 Bí Thuật Chiếu Sáng Công Nghiệp</title>
+  <script src="https://www.gstatic.com/antigravity/web/dev/tailwindcss.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
+
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      background:
+        radial-gradient(ellipse 80% 50% at 50% -10%, rgba(56, 189, 248, 0.12), transparent),
+        radial-gradient(ellipse 60% 40% at 90% 100%, rgba(217, 70, 239, 0.08), transparent),
+        #020617;
+      min-height: 100vh;
+    }
+
+    /* ===== Header gradient title ===== */
+    h1 {
+      background: linear-gradient(90deg, #38bdf8, #a78bfa, #e879f9, #38bdf8);
+      background-size: 250% auto;
+      -webkit-background-clip: text;
+      background-clip: text;
+      -webkit-text-fill-color: transparent;
+      animation: shimmerTitle 6s linear infinite;
+    }
+    @keyframes shimmerTitle {
+      to { background-position: 250% center; }
+    }
+
+    /* ===== Card hover: nhấc lên + viền sáng ===== */
+    .card-btn {
+      transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+    .card-btn:hover {
+      transform: translateY(-4px);
+      border-color: #475569;
+      box-shadow: 0 12px 30px -8px rgba(0, 0, 0, 0.6), 0 0 0 1px rgba(56, 189, 248, 0.1);
+    }
+    .card-btn:active { transform: translateY(-1px) scale(0.98); }
+
+    .active-card {
+      border-color: #38bdf8 !important;
+      background: rgba(14, 165, 233, 0.15) !important;
+      box-shadow: 0 0 25px rgba(56, 189, 248, 0.25), inset 0 0 20px rgba(56, 189, 248, 0.05);
+      animation: pulseActive 2.5s ease-in-out infinite;
+    }
+    @keyframes pulseActive {
+      0%, 100% { box-shadow: 0 0 25px rgba(56, 189, 248, 0.2), inset 0 0 20px rgba(56, 189, 248, 0.05); }
+      50% { box-shadow: 0 0 35px rgba(56, 189, 248, 0.4), inset 0 0 20px rgba(56, 189, 248, 0.08); }
+    }
+    .active-card h3 {
+      color: #38bdf8 !important;
+    }
+
+    /* ===== Panel kính mờ ===== */
+    .glass-panel {
+      background: rgba(15, 23, 42, 0.7) !important;
+      backdrop-filter: blur(12px);
+    }
+
+    /* ===== Canvas: viền neon + scanline mảnh ===== */
+    canvas {
+      image-rendering: auto;
+      border-radius: 0.75rem;
+    }
+    .canvas-glow {
+      box-shadow:
+        0 0 30px rgba(56, 189, 248, 0.12),
+        inset 0 0 60px rgba(0, 0, 0, 0.4);
+    }
+    .scanlines::after {
+      content: "";
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+      background: repeating-linear-gradient(
+        0deg,
+        transparent 0px, transparent 3px,
+        rgba(56, 189, 248, 0.02) 3px, rgba(56, 189, 248, 0.02) 4px
+      );
+    }
+
+    /* ===== Nút hover sáng lên ===== */
+    button { transition: all 0.2s ease; }
+    button:not(.card-btn):hover { filter: brightness(1.15); transform: translateY(-1px); }
+
+    /* ===== Fade-in khi đổi mode ===== */
+    .fade-swap { animation: fadeSwap 0.4s ease; }
+    @keyframes fadeSwap {
+      from { opacity: 0; transform: translateY(6px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    /* ===== Scrollbar thẩm mỹ ===== */
+    ::-webkit-scrollbar { width: 10px; height: 10px; }
+    ::-webkit-scrollbar-track { background: #0f172a; }
+    ::-webkit-scrollbar-thumb { background: #334155; border-radius: 6px; }
+    ::-webkit-scrollbar-thumb:hover { background: #38bdf8; }
+
+    /* ===== FAKE-3D: nghiêng theo chuột + vệt bóng kính ===== */
+    [data-tilt] {
+      position: relative;
+      transform-style: preserve-3d;
+      will-change: transform;
+      transition: transform 0.5s cubic-bezier(0.22, 0.68, 0.32, 1), box-shadow 0.3s ease;
+    }
+    [data-tilt].tilting { transition: transform 0.06s linear; }
+    .tilt-glare {
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+      border-radius: inherit;
+      background: radial-gradient(circle at var(--gx, 50%) var(--gy, 50%),
+        rgba(255, 255, 255, 0.16), rgba(56, 189, 248, 0.06) 35%, transparent 60%);
+      opacity: 0;
+      transition: opacity 0.3s ease;
+      mix-blend-mode: screen;
+      z-index: 5;
+    }
+  </style>
+</head>
+<body class="bg-slate-950 text-slate-100 p-4 min-h-screen">
+  <div class="max-w-7xl mx-auto space-y-4">
+    
+    <!-- Top Header -->
+    <div class="glass-panel bg-slate-900 border border-slate-800 rounded-2xl p-5 shadow-2xl flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+      <div>
+        <div class="flex items-center gap-2">
+          <span class="px-2.5 py-1 rounded-full text-xs font-bold bg-amber-500/20 text-amber-400 border border-amber-500/30">
+            CHIẾN DỊCH SPORTAGE • VŨ KHÍ QUANG HỌC
+          </span>
+          <span class="text-xs font-mono text-cyan-400 flex items-center gap-1.5">
+            <span class="w-2 h-2 rounded-full bg-emerald-400 animate-ping"></span>
+            RAY-TRACING & PHOTON PARTICLES 2D
+          </span>
+        </div>
+        <h1 class="text-2xl font-extrabold text-white mt-1">BÍ THUẬT CHỈNH ĐÈN & HƯỚNG ĐI TIA SÁNG (LIGHTING MASTERY)</h1>
+        <p class="text-sm text-slate-400 mt-0.5">
+          "Chiếu sáng quyết định 70% thành bại của một dự án Machine Vision" – Đầy đủ 5 loại đèn công nghiệp từ cơ bản đến "trùm cuối".
+        </p>
+      </div>
+
+      <!-- Controls -->
+      <div class="flex items-center gap-3">
+        <button id="btnPlay" onclick="togglePlay()" class="px-4 py-2 rounded-xl text-xs font-bold bg-sky-600 hover:bg-sky-500 text-white transition flex items-center gap-2 shadow-lg shadow-sky-600/30">
+          <span id="playIcon">⏸</span> <span id="playText">Tạm dừng tia sáng</span>
+        </button>
+        <button id="btnTour" onclick="toggleTour()" class="px-4 py-2 rounded-xl text-xs font-bold bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 transition flex items-center gap-2">
+          <span>🔄</span> <span>Tự động chuyển 5 đèn</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- 5 Tabs Selection Grid -->
+    <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2.5">
+      <!-- Tab 1 -->
+      <button onclick="setMode(0)" id="tab-0" data-tilt="6" class="card-btn active-card p-3.5 rounded-xl border border-slate-800 bg-slate-900/60 text-left transition-all hover:border-slate-700">
+        <div class="flex items-center justify-between">
+          <span class="text-lg">⬛</span>
+          <span class="text-[10px] font-mono font-bold px-1.5 py-0.5 rounded bg-blue-500/20 text-blue-400 border border-blue-500/30">GAUGING</span>
+        </div>
+        <h3 class="text-xs font-bold text-white mt-2">1. Backlight</h3>
+        <p class="text-[11px] text-slate-400 font-medium">Đèn Chiếu Đáy</p>
+        <p class="text-[10px] text-sky-400/90 mt-1 font-mono">Bóng đen nền trắng</p>
+      </button>
+
+      <!-- Tab 2 -->
+      <button onclick="setMode(1)" id="tab-1" data-tilt="6" class="card-btn p-3.5 rounded-xl border border-slate-800 bg-slate-900/60 text-left transition-all hover:border-slate-700">
+        <div class="flex items-center justify-between">
+          <span class="text-lg">⚡</span>
+          <span class="text-[10px] font-mono font-bold px-1.5 py-0.5 rounded bg-rose-500/20 text-rose-400 border border-rose-500/30">INSPECT</span>
+        </div>
+        <h3 class="text-xs font-bold text-white mt-2">2. Low-Angle Ring</h3>
+        <p class="text-[11px] text-slate-400 font-medium">Đèn Vòng Xiên 15°</p>
+        <p class="text-[10px] text-rose-400/90 mt-1 font-mono">Bắt vết xước (Darkfield)</p>
+      </button>
+
+      <!-- Tab 3 -->
+      <button onclick="setMode(2)" id="tab-2" data-tilt="6" class="card-btn p-3.5 rounded-xl border border-slate-800 bg-slate-900/60 text-left transition-all hover:border-slate-700">
+        <div class="flex items-center justify-between">
+          <span class="text-lg">🪞</span>
+          <span class="text-[10px] font-mono font-bold px-1.5 py-0.5 rounded bg-amber-500/20 text-amber-400 border border-amber-500/30">SPECULAR</span>
+        </div>
+        <h3 class="text-xs font-bold text-white mt-2">3. Coaxial Light</h3>
+        <p class="text-[11px] text-slate-400 font-medium">Đèn Đồng Trục</p>
+        <p class="text-[10px] text-amber-400/90 mt-1 font-mono">Khắc tinh lóa gương</p>
+      </button>
+
+      <!-- Tab 4 -->
+      <button onclick="setMode(3)" id="tab-3" data-tilt="6" class="card-btn p-3.5 rounded-xl border border-slate-800 bg-slate-900/60 text-left transition-all hover:border-slate-700">
+        <div class="flex items-center justify-between">
+          <span class="text-lg">🥣</span>
+          <span class="text-[10px] font-mono font-bold px-1.5 py-0.5 rounded bg-purple-500/20 text-purple-400 border border-purple-500/30">DIFFUSED</span>
+        </div>
+        <h3 class="text-xs font-bold text-white mt-2">4. Dome Light</h3>
+        <p class="text-[11px] text-slate-400 font-medium">Đèn Vòm Bát Úp</p>
+        <p class="text-[10px] text-purple-400/90 mt-1 font-mono">Mặt cong, vỏ lon, bi</p>
+      </button>
+
+      <!-- Tab 5 (NEW: SPECIAL COMBINED) -->
+      <button onclick="setMode(4)" id="tab-4" data-tilt="6" class="card-btn p-3.5 rounded-xl border border-slate-800 bg-slate-900/60 text-left transition-all hover:border-slate-700">
+        <div class="flex items-center justify-between">
+          <span class="text-lg">👑</span>
+          <span class="text-[10px] font-mono font-bold px-1.5 py-0.5 rounded bg-fuchsia-500/20 text-fuchsia-400 border border-fuchsia-500/30">TRÙM CUỐI</span>
+        </div>
+        <h3 class="text-xs font-bold text-white mt-2">5. Coaxial + Dome</h3>
+        <p class="text-[11px] text-slate-400 font-medium">Đèn Lai Toàn Diện</p>
+        <p class="text-[10px] text-fuchsia-400/90 mt-1 font-mono">0 điểm mù kim loại</p>
+      </button>
+    </div>
+
+    <!-- Main Visual Stage: 2 Viewports Side-by-Side -->
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+      
+      <!-- LEFT: Ray-Tracing Optical Simulation -->
+      <div class="glass-panel bg-slate-900 border border-slate-800 rounded-2xl p-4 flex flex-col">
+        <div class="flex items-center justify-between mb-3">
+          <div class="flex items-center gap-2">
+            <span class="w-3 h-3 rounded-full bg-cyan-400 shadow-sm shadow-cyan-400"></span>
+            <span class="text-sm font-bold text-white uppercase tracking-wide">Mô Hình Quang Học & Hướng Đi Tia Sáng</span>
+          </div>
+          <span class="text-xs font-mono text-cyan-300 bg-cyan-500/15 border border-cyan-500/30 px-2.5 py-1 rounded-md">3D VIEW • KÉO CHUỘT ĐỂ XOAY</span>
+        </div>
+
+        <div class="canvas-glow scanlines relative bg-slate-950 rounded-xl overflow-hidden border border-slate-800 aspect-[4/3] flex items-center justify-center">
+          <div id="ray3d" class="w-full h-full"></div>
+          <div class="absolute top-2 left-2 bg-slate-900/80 backdrop-blur px-2.5 py-1 rounded text-[11px] text-cyan-300 font-mono border border-slate-700">
+            🖱️ KÉO CHUỘT XOAY 3D • BÁNH XE ĐỔI GÓC NHÌN
+          </div>
+        </div>
+
+        <!-- Explanation of Ray Path -->
+        <div class="fade-swap mt-3 p-3 rounded-xl bg-slate-950/60 border border-slate-800/80 text-xs">
+          <div class="font-bold text-cyan-400 flex items-center gap-1.5 mb-1">
+            <span>🧭</span> <span id="rayPathTitle">Hướng đi tia sáng:</span>
+          </div>
+          <p id="rayPathDesc" class="text-slate-300 leading-relaxed font-normal">
+            Đèn phẳng chiếu hạt photon từ dưới đáy hướng thẳng lên camera. Phần thân bulông chặn đứng các hạt photon tạo vùng tối, các tia hai bên lọt thẳng vào thấu kính.
+          </p>
+        </div>
+      </div>
+
+      <!-- RIGHT: Resulting Camera Sensor Image -->
+      <div class="glass-panel bg-slate-900 border border-slate-800 rounded-2xl p-4 flex flex-col">
+        <div class="flex items-center justify-between mb-3">
+          <div class="flex items-center gap-2">
+            <span class="w-3 h-3 rounded-full bg-emerald-400 shadow-sm shadow-emerald-400"></span>
+            <span class="text-sm font-bold text-white uppercase tracking-wide">Ảnh Cảm Biến Camera Công Nghiệp Thu Được</span>
+          </div>
+          <span id="sensorStatusBadge" class="text-xs font-mono font-bold px-2.5 py-1 rounded-md bg-blue-500/20 text-blue-400 border border-blue-500/30">
+            GAUGING: OK
+          </span>
+        </div>
+
+        <div class="canvas-glow scanlines relative bg-black rounded-xl overflow-hidden border border-slate-800 aspect-[4/3] flex items-center justify-center">
+          <canvas id="sensorCanvas" width="600" height="450" class="w-full h-full object-contain"></canvas>
+          <div class="absolute bottom-2 left-2 bg-black/80 px-2.5 py-1 rounded text-[10px] text-emerald-400 font-mono border border-emerald-500/30">
+            INDUSTRIAL CAMERA • EXPOSURE: 1200µs • GAIN: 1.0x
+          </div>
+        </div>
+
+        <!-- Vision Algorithm Advice -->
+        <div class="fade-swap mt-3 p-3 rounded-xl bg-slate-950/60 border border-slate-800/80 text-xs">
+          <div class="font-bold text-emerald-400 flex items-center gap-1.5 mb-1">
+            <span>⚡</span> <span>Tuyệt chiêu thuật toán (Computer Vision Code):</span>
+          </div>
+          <p id="algoDesc" class="text-slate-300 leading-relaxed font-normal">
+            Hình ảnh đạt độ tương phản cực đại (100%). Thuật toán chỉ cần gọi <code>cv2.threshold(gray, 128, 255, THRESH_BINARY_INV)</code> là lấy trọn biên dạng đo đạc chính xác tới 0.001mm!
+          </p>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- Deep Industrial Context Box -->
+    <div class="bg-gradient-to-r from-slate-900 to-slate-850 border border-slate-800 rounded-2xl p-5 shadow-xl">
+      <div class="flex items-start gap-4">
+        <div class="text-3xl p-3 rounded-xl bg-sky-500/10 border border-sky-500/20 text-sky-400" id="modeIcon">
+          ⬛
+        </div>
+        <div class="flex-1">
+          <div class="flex flex-wrap items-center gap-2">
+            <h2 id="deepTitle" class="text-lg font-bold text-white">Đèn Chiếu Đáy (Backlight) – Tuyệt Phẩm Đo Đạc Kích Thước</h2>
+            <span id="deepTag" class="text-xs px-2.5 py-0.5 rounded-full font-bold bg-sky-500/20 text-sky-300 border border-sky-500/30">
+              Gauging / Measurement
+            </span>
+          </div>
+          <p id="deepStory" class="text-sm text-slate-300 mt-2 leading-relaxed">
+            Khi ánh sáng đi xuyên qua cạnh của sản phẩm, mép cạnh trở thành đường phân định tuyệt đối giữa 0 (đen) và 255 (trắng). Không bóng đổ, không lóa phản chiếu, mép biên cực sắc nét.
+          </p>
+
+          <div class="grid grid-cols-1 md:grid-cols-3 gap-3 mt-4 pt-4 border-t border-slate-800/80">
+            <div class="p-2.5 rounded-lg bg-slate-950/60 border border-slate-800">
+              <span class="text-slate-400 text-[11px] block font-semibold">🎯 Ứng dụng thực tế:</span>
+              <span id="deepApp" class="text-xs text-white font-medium mt-0.5 block">Đo đường kính bulông, bước ren ốc, độ dày tấm mạch PCB, mẻ vành ngoài.</span>
+            </div>
+            <div class="p-2.5 rounded-lg bg-slate-950/60 border border-slate-800">
+              <span class="text-slate-400 text-[11px] block font-semibold">❌ Lỗi nếu dùng sai đèn:</span>
+              <span id="deepWrong" class="text-xs text-rose-300 font-medium mt-0.5 block">Nếu chiếu đèn từ trên xuống, ren kim loại lóa sáng làm mép đo sai lệch 0.1 - 0.5mm!</span>
+            </div>
+            <div class="p-2.5 rounded-lg bg-slate-950/60 border border-slate-800">
+              <span class="text-slate-400 text-[11px] block font-semibold">💡 Mẹo phỏng vấn FDI:</span>
+              <span id="deepInterview" class="text-xs text-amber-300 font-medium mt-0.5 block">"Bài toán đo kích thước ngoài (Profile) luôn ưu tiên số 1 là Backlight có bộ khuếch tán Opal Diffuser."</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <script>
+    // ===== THREE.JS 3D SCENE (thay Side-View 2D) =====
+    const ray3dEl = document.getElementById('ray3d');
+    const scene = new THREE.Scene();
+    scene.background = new THREE.Color(0x0a0e1a);
+    scene.fog = new THREE.Fog(0x0a0e1a, 18, 34);
+
+    const camera3d = new THREE.PerspectiveCamera(45, 1, 0.1, 100);
+    camera3d.position.set(6.5, 4.2, 6.5);
+    camera3d.lookAt(0, 1.3, 0);
+
+    const renderer3d = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+    renderer3d.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+    renderer3d.shadowMap.enabled = true;
+    ray3dEl.appendChild(renderer3d.domElement);
+
+    const controls = new THREE.OrbitControls(camera3d, renderer3d.domElement);
+    controls.target.set(0, 1.3, 0);
+    controls.enableDamping = true;
+    controls.dampingFactor = 0.08;
+    controls.autoRotate = true;
+    controls.autoRotateSpeed = 0.8;
+    controls.minDistance = 3;
+    controls.maxDistance = 18;
+    controls.maxPolarAngle = Math.PI * 0.85;
+
+    // Ánh sáng
+    const hemiLight = new THREE.HemisphereLight(0x8ab4ff, 0x1a1a2e, 0.7);
+    scene.add(hemiLight);
+    const dirLight = new THREE.DirectionalLight(0xffffff, 0.9);
+    dirLight.position.set(6, 10, 5);
+    scene.add(dirLight);
+
+    // Sàn lưới
+    const grid = new THREE.GridHelper(12, 20, 0x334155, 0x1e293b);
+    grid.position.y = -0.05;
+    scene.add(grid);
+
+    // Nhóm chứa khí cụ theo mode (đổi mode là dọn + dựng lại)
+    const stageGroup = new THREE.Group();
+    scene.add(stageGroup);
+
+    const sensorCanvas = document.getElementById('sensorCanvas');
+    const sensorCtx = sensorCanvas.getContext('2d');
+
+    let currentMode = 0;
+    let isPlaying = true;
+    let tourActive = false;
+    let tourTimer = null;
+    let photonMeshes = [];
+
+    const modeData = [
+      {
+        id: 0,
+        name: "1. Đèn Chiếu Đáy (Backlight)",
+        badge: "GAUGING • ĐO KÍCH CỠ",
+        badgeColor: "bg-blue-500/20 text-blue-400 border-blue-500/30",
+        rayTitle: "Hướng đi của tia sáng:",
+        rayDesc: "Hạt photon phát ra từ tấm đèn đáy bắn thẳng đứng LÊN TRÊN. Thân bulông cản sáng tuyệt đối (photon bị chặn). Tia sáng hai bên cạnh tự do bay thẳng vào thấu kính Camera.",
+        algo: "Độ tương phản đạt 100% (đen kịt trên trắng tinh). Gọi <code>cv2.findContours</code> hoặc Subpixel Edge Detector là đo chính xác đường kính sai số chỉ vài micromet!",
+        icon: "⬛",
+        deepTitle: "Đèn Chiếu Đáy (Backlight) – Tuyệt Phẩm Đo Đạc Kích Thước",
+        deepTag: "Gauging / Measurement",
+        deepStory: "Biến vật thể 3D thành hình chiếu 2D phẳng lì (Silhouette). Mọi chi tiết gồ ghề bên trong bị triệt tiêu, chỉ để lại đường viền bao ngoài sắc như dao cạo.",
+        deepApp: "Đo ren ốc vít, chân cắm vi mạch IC, đường kính vòng bi, độ dày màng film.",
+        deepWrong: "Nếu chiếu đèn từ trên xuống, ren kim loại lóa sáng sẽ khiến biên dạng bị 'phình to' hoặc méo mó, thuật toán đo sai lệch ngay 0.2mm!",
+        deepInterview: "Nêu bật: 'Với bài toán đo đạc kích thước ngoại quan (Silhouette/Dimension), Backlight là tiêu chuẩn vàng không thể thay thế.'"
+      },
+      {
+        id: 1,
+        name: "2. Đèn Vòng Xiên Góc Thấp (Low-Angle Ring Light)",
+        badge: "INSPECTION • SOI VẾT XƯỚC BỀ MẶT",
+        badgeColor: "bg-rose-500/20 text-rose-400 border-rose-500/30",
+        rayTitle: "Hướng đi của tia sáng (Hiệu ứng Darkfield):",
+        rayDesc: "Đèn phát tia photon xiên là là góc 15°-20° sát mặt kim loại. Mặt kim loại phẳng bóng phản xạ toàn bộ photon văng ra hai bên (tối đen). Riêng vết xước gồ ghề tán xạ photon dội ngược thẳng đứng LÊN ỐNG KÍNH!",
+        algo: "Nền đen như mực (Pixel ~ 0), vết xước sáng rực rỡ (Pixel ~ 255). Chỉ cần ngưỡng Threshold đơn giản là bắt trọn vết xước mà không cần AI phức tạp!",
+        icon: "⚡",
+        deepTitle: "Đèn Vòng Xiên Góc Thấp – Vũ Khí Bắt Trọn Vết Xước & Chữ Dập Nổi",
+        deepTag: "Darkfield Illumination",
+        deepStory: "Tương tự như khi bạn quét đèn pin nằm ngang sát mặt đường lúc đêm tối, một hạt cát nhỏ hay vết rạn nứt nhỏ cũng tạo nên bóng đổ và quầng sáng cực mạnh.",
+        deepApp: "Bắt vết xước trên mặt nhôm phay, kiểm tra nứt mẻ mặt chip, đọc chữ khắc laser dập nổi.",
+        deepWrong: "Nếu dùng đèn chiếu thẳng từ trên xuống, mặt kim loại bóng sẽ lóa trắng xóa một cục (Hotspot), che khuất hoàn toàn vết xước.",
+        deepInterview: "Từ khóa 'Darkfield Illumination': Ánh sáng phản xạ chính không đi vào camera, chỉ ánh sáng tán xạ từ khuyết tật mới đi vào camera."
+      },
+      {
+        id: 2,
+        name: "3. Đèn Đồng Trục (Coaxial Light)",
+        badge: "SPECULAR • KHẮC TINH LÓA GƯƠNG",
+        badgeColor: "bg-amber-500/20 text-amber-400 border-amber-500/30",
+        rayTitle: "Hướng đi của tia sáng (Lăng Kính 45° Beam Splitter):",
+        rayDesc: "Đèn LED bên hông bắn photon theo phương NGANG. Gặp kính bán mạ nghiêng 45°, photon bẻ góc 90° đi THẲNG ĐỨNG XUỐNG mặt gương, rồi phản xạ 90° NGƯỢC LÊN xuyên qua kính vào camera. Ánh sáng chiếu đều 100% diện tích!",
+        algo: "Bề mặt kim loại/silicon sáng mịn như một tấm gương phẳng đồng nhất. Các nét in chữ và mã QR Code laser hiển thị đen thẫm, tương phản tuyệt hảo để giải mã trong 2ms!",
+        icon: "🪞",
+        deepTitle: "Đèn Đồng Trục – Tuyệt Kỹ Cho Mặt Gương, Silicon & Kính Phẳng",
+        deepTag: "Coaxial / On-Axis Light",
+        deepStory: "Nguồn sáng và ống kính Camera cùng chia sẻ chung MỘT TRỤC QUANG HỌC (Co-axial), triệt tiêu hoàn toàn góc phản xạ xiên gây chói lóa.",
+        deepApp: "Soi mặt chip silicon Apple A18, mặt kính màn hình smartphone, vi mạch dập nổi, tem chống hàng giả phản quang.",
+        deepWrong: "Dùng đèn vòng thông thường soi mặt gương sẽ chỉ thấy một vòng tròn đèn LED lóa mắt phản chiếu trên ảnh, xung quanh tối đen.",
+        deepInterview: "Nêu bật: 'Đèn Coaxial sử dụng Beam Splitter 45° để ánh sáng phát ra đồng trục với góc thu ảnh của Sensor, triệt tiêu góc phản xạ lệch.'"
+      },
+      {
+        id: 3,
+        name: "4. Đèn Vòm Bát Úp (Dome Light)",
+        badge: "DIFFUSED • BỀ MẶT CONG & LON NHÔM",
+        badgeColor: "bg-purple-500/20 text-purple-400 border-purple-500/30",
+        rayTitle: "Hướng đi của tia sáng (Tán Xạ Đa Hướng Vòm Cầu):",
+        rayDesc: "Dải LED dưới chân bắn photon LÊN THÀNH VÒM SƠN TRẮNG. Thành bát tán xạ photon dội ngược lại theo mọi góc ngẫu nhiên (360°) trút đều xuống vật thể cong. Không còn một góc cạnh nào bị bóng tối hay điểm lóa cục bộ!",
+        algo: "Mặt cong của lon nhôm sáng dịu và đều như chụp dưới trời râm nhiều mây. Dùng thư viện OCR hoặc Barcode Reader đọc mã date/lot tỷ lệ chính xác 99.99%.",
+        icon: "🥣",
+        deepTitle: "Đèn Vòm Bát Úp (Dome Light) – 'Bầu Trời Nhiều Mây' Khử Lóa Mặt Cong",
+        deepTag: "Diffuse Dome Illumination",
+        deepStory: "Vật thể cong (viên bi thép, vỏ lon) hoạt động như gương lồi – nó gom bất kỳ đèn thẳng nào thành đốm lóa. Đèn Dome tạo ra nguồn sáng tán xạ bao bọc đa hướng.",
+        deepApp: "Đọc date dập nổi trên đáy lon bia/nước ngọt, kiểm tra bề mặt viên bi bearing, vỉ thuốc tây bọc màng nhôm dập cong.",
+        deepWrong: "Dùng đèn thẳng chiếu vào lon bia sẽ bị 1 dải sáng trắng xóa che mất chữ in ngày sản xuất.",
+        deepInterview: "Nhấn mạnh: 'Dome light mô phỏng điều kiện ánh sáng mây mù (Cloudy Day), khử hoàn toàn hiệu ứng phản xạ gương lồi của vật thể hình trụ/cầu.'"
+      },
+      {
+        id: 4,
+        name: "5. Coaxial + Dome Combined (Đèn Lai Toàn Diện)",
+        badge: "HYBRID • TRÙM CUỐI KIM LOẠI 0 ĐIỂM MÙ",
+        badgeColor: "bg-fuchsia-500/20 text-fuchsia-400 border-fuchsia-500/30",
+        rayTitle: "Hướng đi tia sáng kép (Coaxial 90° xuyên qua tâm Dome 360°):",
+        rayDesc: "Tầng trên: Khối Coaxial bắn tia vuông góc 90° xuyên qua lỗ camera của vòm Dome xuống mặt phẳng gương. Tầng dưới: Vòm Dome bắn tán xạ 360° ôm trọn các mép vát, gờ cong và chốt tán 3D. Hai nguồn sáng bổ trợ xóa sạch 100% điểm mù!",
+        algo: "Mặt phẳng gương sáng đều mịn mà KHÔNG bị đốm đen lỗ Camera; viền cong và chốt tán nổi sáng rõ từng góc cạnh. Thuật toán kiểm tra ngoại quan (AOI) kiểm tra đồng thời cả 2 vùng trên cùng 1 khung hình!",
+        icon: "👑",
+        deepTitle: "Đèn Lai Coaxial + Dome – Vua Của Thế Giới Kim Loại Bóng Loáng Phức Tạp",
+        deepTag: "Coaxial + Diffuse Dome Hybrid",
+        deepStory: "Nếu chỉ dùng Dome: Mặt phẳng bị in đốm đen của lỗ camera. Nếu chỉ dùng Coaxial: Viền cong và góc nghiêng bị tối sầm. Kết hợp cả 2 là giải pháp hoàn mỹ nhất cho vật thể kim loại phức tạp.",
+        deepApp: "Nắp lon bia có khoen giật (vừa phẳng vừa chốt tán cong), chip BGA (vừa lưng silicon phẳng vừa bi thiếc hàn cong), logo mạ crom ô tô có gân dập nổi 3D.",
+        deepWrong: "Dùng sai đèn đơn sẽ phải chụp 2 lần (2 trạm camera khác nhau) gây tốn gấp đôi chi phí và thời gian chu kỳ máy.",
+        deepInterview: "Nêu 2 nhược điểm thực tế: 'Rất cồng kềnh (to như nồi cơm điện mini) và hao hụt ~75% quang thông do kính Beam Splitter nuốt sáng.'"
+      }
+    ];
+
+    function setMode(index) {
+      currentMode = index;
+      document.querySelectorAll('.card-btn').forEach((btn, idx) => {
+        if (idx === index) {
+          btn.classList.add('active-card');
+        } else {
+          btn.classList.remove('active-card');
+        }
+      });
+
+      const m = modeData[index];
+      document.getElementById('rayPathDesc').innerText = m.rayDesc;
+      document.getElementById('algoDesc').innerHTML = m.algo;
+      document.getElementById('sensorStatusBadge').innerText = m.badge;
+      document.getElementById('sensorStatusBadge').className = `text-xs font-mono font-bold px-2.5 py-1 rounded-md ${m.badgeColor}`;
+      document.getElementById('modeIcon').innerText = m.icon;
+      document.getElementById('deepTitle').innerText = m.deepTitle;
+      document.getElementById('deepTag').innerText = m.deepTag;
+      document.getElementById('deepStory').innerText = m.deepStory;
+      document.getElementById('deepApp').innerText = m.deepApp;
+      document.getElementById('deepWrong').innerText = m.deepWrong;
+      document.getElementById('deepInterview').innerText = m.deepInterview;
+
+      clearStage();
+      buildStage3D(currentMode);
+      initPhotons3D();
+
+      // Re-trigger fade animation khi đổi mode
+      document.querySelectorAll('.fade-swap').forEach(el => {
+        el.classList.remove('fade-swap');
+        void el.offsetWidth;
+        el.classList.add('fade-swap');
+      });
+    }
+
+    function togglePlay() {
+      isPlaying = !isPlaying;
+      document.getElementById('playText').innerText = isPlaying ? "Tạm dừng tia sáng" : "Tiếp tục chạy tia";
+      document.getElementById('playIcon').innerText = isPlaying ? "⏸" : "▶";
+    }
+
+    function toggleTour() {
+      tourActive = !tourActive;
+      const btn = document.getElementById('btnTour');
+      if (tourActive) {
+        btn.classList.add('bg-sky-600', 'text-white');
+        btn.classList.remove('bg-slate-800', 'text-slate-200');
+        tourTimer = setInterval(() => {
+          setMode((currentMode + 1) % 5);
+        }, 5000);
+      } else {
+        btn.classList.remove('bg-sky-600', 'text-white');
+        btn.classList.add('bg-slate-800', 'text-slate-200');
+        clearInterval(tourTimer);
+      }
+    }
+
+    // Class for animated photons along specific ray paths
+    class Photon {
+      constructor(mode) {
+        this.reset(mode);
+      }
+
+      reset(mode) {
+        this.mode = mode;
+        this.progress = Math.random();
+        this.speed = 0.008 + Math.random() * 0.006;
+        this.size = 2.5 + Math.random() * 1.5;
+
+        if (mode === 0) {
+          this.startX = 160 + Math.random() * 280;
+          this.startY = 390;
+          this.isBlocked = (this.startX > 260 && this.startX < 340);
+        } else if (mode === 1) {
+          this.side = Math.random() > 0.5 ? 'left' : 'right';
+          this.startX = this.side === 'left' ? 100 : 500;
+          this.startY = 350;
+          this.hitsScratch = Math.random() > 0.4;
+        } else if (mode === 2) {
+          this.startX = 430;
+          this.startY = 220 + (Math.random() - 0.5) * 20;
+        } else if (mode === 3) {
+          this.side = Math.random() > 0.5 ? 'left' : 'right';
+          this.startX = this.side === 'left' ? 180 + Math.random() * 20 : 400 + Math.random() * 20;
+          this.startY = 360;
+          this.domeAngle = (Math.random() - 0.5) * 1.2;
+        } else if (mode === 4) {
+          // HYBRID COAXIAL + DOME
+          this.subType = Math.random() > 0.5 ? 'coaxial' : 'dome';
+          if (this.subType === 'coaxial') {
+            this.startX = 410;
+            this.startY = 175 + (Math.random() - 0.5) * 15;
+          } else {
+            this.side = Math.random() > 0.5 ? 'left' : 'right';
+            this.startX = this.side === 'left' ? 180 + Math.random() * 20 : 400 + Math.random() * 20;
+            this.startY = 360;
+            this.domeAngle = (Math.random() - 0.5) * 1.2;
+          }
+        }
+      }
+
+      update() {
+        if (!isPlaying) return;
+        this.progress += this.speed;
+        if (this.progress >= 1.0) {
+          this.reset(this.mode);
+        }
+      }
+
+      draw(ctx) {
+        ctx.save();
+        if (this.mode === 0) {
+          // BACKLIGHT
+          const p = this.progress;
+          let curX = this.startX;
+          let curY = this.startY;
+
+          if (this.isBlocked) {
+            curY = this.startY + p * (345 - this.startY);
+            ctx.fillStyle = "rgba(255, 100, 100, 0.7)";
+            ctx.shadowColor = "#ef4444";
+            ctx.shadowBlur = 6;
+          } else {
+            const targetX = 300 + (this.startX - 300) * 0.15;
+            curX = this.startX + p * (targetX - this.startX);
+            curY = this.startY + p * (130 - this.startY);
+            ctx.fillStyle = "rgba(56, 189, 248, 0.9)";
+            ctx.shadowColor = "#38bdf8";
+            ctx.shadowBlur = 8;
+          }
+          ctx.beginPath();
+          ctx.arc(curX, curY, this.size, 0, Math.PI * 2);
+          ctx.fill();
+
+        } else if (this.mode === 1) {
+          // LOW-ANGLE RING
+          const p = this.progress;
+          const scratchX = 300;
+          const scratchY = 352;
+
+          if (this.hitsScratch) {
+            if (p < 0.5) {
+              const subP = p / 0.5;
+              const curX = this.startX + subP * (scratchX - this.startX);
+              const curY = this.startY + subP * (scratchY - this.startY);
+              ctx.fillStyle = "rgba(244, 63, 94, 0.85)";
+              ctx.shadowColor = "#f43f5e";
+              ctx.shadowBlur = 8;
+              ctx.beginPath();
+              ctx.arc(curX, curY, this.size, 0, Math.PI * 2);
+              ctx.fill();
+            } else {
+              const subP = (p - 0.5) / 0.5;
+              const curX = scratchX + subP * (300 - scratchX);
+              const curY = scratchY + subP * (130 - scratchY);
+              ctx.fillStyle = "rgba(250, 204, 21, 0.95)";
+              ctx.shadowColor = "#facc15";
+              ctx.shadowBlur = 10;
+              ctx.beginPath();
+              ctx.arc(curX, curY, this.size + 1, 0, Math.PI * 2);
+              ctx.fill();
+            }
+          } else {
+            const bounceTargetX = this.side === 'left' ? 480 : 120;
+            const curX = this.startX + p * (bounceTargetX - this.startX);
+            const curY = this.startY + p * (320 - this.startY);
+            ctx.fillStyle = "rgba(244, 63, 94, 0.4)";
+            ctx.beginPath();
+            ctx.arc(curX, curY, this.size, 0, Math.PI * 2);
+            ctx.fill();
+          }
+
+        } else if (this.mode === 2) {
+          // COAXIAL
+          const p = this.progress;
+          if (p < 0.33) {
+            const subP = p / 0.33;
+            const curX = this.startX + subP * (300 - this.startX);
+            ctx.fillStyle = "rgba(251, 191, 36, 0.9)";
+            ctx.shadowColor = "#fbbf24";
+            ctx.shadowBlur = 8;
+            ctx.beginPath();
+            ctx.arc(curX, this.startY, this.size, 0, Math.PI * 2);
+            ctx.fill();
+          } else if (p < 0.66) {
+            const subP = (p - 0.33) / 0.33;
+            const curY = this.startY + subP * (352 - this.startY);
+            ctx.fillStyle = "rgba(56, 189, 248, 0.9)";
+            ctx.shadowColor = "#38bdf8";
+            ctx.shadowBlur = 8;
+            ctx.beginPath();
+            ctx.arc(300, curY, this.size, 0, Math.PI * 2);
+            ctx.fill();
+          } else {
+            const subP = (p - 0.66) / 0.34;
+            const curY = 352 + subP * (130 - 352);
+            ctx.fillStyle = "rgba(255, 255, 255, 0.95)";
+            ctx.shadowColor = "#ffffff";
+            ctx.shadowBlur = 10;
+            ctx.beginPath();
+            ctx.arc(300, curY, this.size + 0.5, 0, Math.PI * 2);
+            ctx.fill();
+          }
+
+        } else if (this.mode === 3) {
+          // DOME
+          const p = this.progress;
+          const domeX = 300 + Math.sin(this.domeAngle) * 110;
+          const domeY = 240 - Math.cos(this.domeAngle) * 90;
+          const ballX = 300 + (Math.random() - 0.5) * 30;
+
+          if (p < 0.5) {
+            const subP = p / 0.5;
+            const curX = this.startX + subP * (domeX - this.startX);
+            const curY = this.startY + subP * (domeY - this.startY);
+            ctx.fillStyle = "rgba(192, 132, 252, 0.8)";
+            ctx.shadowColor = "#c084fc";
+            ctx.shadowBlur = 6;
+            ctx.beginPath();
+            ctx.arc(curX, curY, this.size, 0, Math.PI * 2);
+            ctx.fill();
+          } else {
+            const subP = (p - 0.5) / 0.5;
+            const curX = domeX + subP * (ballX - domeX);
+            const curY = domeY + subP * (350 - domeY);
+            ctx.fillStyle = "rgba(233, 213, 255, 0.9)";
+            ctx.shadowColor = "#e9d5ff";
+            ctx.shadowBlur = 8;
+            ctx.beginPath();
+            ctx.arc(curX, curY, this.size, 0, Math.PI * 2);
+            ctx.fill();
+          }
+
+        } else if (this.mode === 4) {
+          // 5. HYBRID COAXIAL + DOME
+          const p = this.progress;
+          if (this.subType === 'coaxial') {
+            if (p < 0.3) {
+              const subP = p / 0.3;
+              const curX = this.startX + subP * (300 - this.startX);
+              ctx.fillStyle = "#fbbf24";
+              ctx.shadowColor = "#fbbf24";
+              ctx.shadowBlur = 8;
+              ctx.beginPath(); ctx.arc(curX, this.startY, this.size, 0, Math.PI * 2); ctx.fill();
+            } else if (p < 0.65) {
+              const subP = (p - 0.3) / 0.35;
+              const curY = this.startY + subP * (350 - this.startY);
+              ctx.fillStyle = "#38bdf8";
+              ctx.shadowColor = "#38bdf8";
+              ctx.shadowBlur = 8;
+              ctx.beginPath(); ctx.arc(300, curY, this.size, 0, Math.PI * 2); ctx.fill();
+            } else {
+              const subP = (p - 0.65) / 0.35;
+              const curY = 350 + subP * (100 - 350);
+              ctx.fillStyle = "#ffffff";
+              ctx.shadowColor = "#ffffff";
+              ctx.shadowBlur = 10;
+              ctx.beginPath(); ctx.arc(300, curY, this.size + 0.5, 0, Math.PI * 2); ctx.fill();
+            }
+          } else {
+            const domeX = 300 + Math.sin(this.domeAngle) * 110;
+            const domeY = 270 - Math.cos(this.domeAngle) * 70;
+            const rimX = this.side === 'left' ? 240 + Math.random() * 20 : 360 - Math.random() * 20;
+
+            if (p < 0.5) {
+              const subP = p / 0.5;
+              const curX = this.startX + subP * (domeX - this.startX);
+              const curY = this.startY + subP * (domeY - this.startY);
+              ctx.fillStyle = "rgba(232, 121, 249, 0.85)";
+              ctx.shadowColor = "#e879f9";
+              ctx.shadowBlur = 6;
+              ctx.beginPath(); ctx.arc(curX, curY, this.size, 0, Math.PI * 2); ctx.fill();
+            } else {
+              const subP = (p - 0.5) / 0.5;
+              const curX = domeX + subP * (rimX - domeX);
+              const curY = domeY + subP * (350 - domeY);
+              ctx.fillStyle = "rgba(245, 208, 254, 0.95)";
+              ctx.shadowColor = "#f5d0fe";
+              ctx.shadowBlur = 8;
+              ctx.beginPath(); ctx.arc(curX, curY, this.size, 0, Math.PI * 2); ctx.fill();
+            }
+          }
+        }
+        ctx.restore();
+      }
+    }
+
+    function initPhotons() {
+      particles = [];
+      const count = currentMode === 4 ? 50 : 40;
+      for (let i = 0; i < count; i++) {
+        particles.push(new Photon(currentMode));
+      }
+    }
+
+    function drawStaticRig(ctx) {
+      ctx.fillStyle = "#090d16";
+      ctx.fillRect(0, 0, 600, 450);
+
+      // Grid
+      ctx.strokeStyle = "rgba(255, 255, 255, 0.04)";
+      ctx.lineWidth = 1;
+      for (let x = 0; x < 600; x += 40) {
+        ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, 450); ctx.stroke();
+      }
+      for (let y = 0; y < 450; y += 40) {
+        ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(600, y); ctx.stroke();
+      }
+
+      // Camera Top Rig
+      ctx.fillStyle = "#1e293b";
+      ctx.strokeStyle = "#475569";
+      ctx.lineWidth = 1.5;
+      ctx.beginPath();
+      ctx.roundRect(240, 20, 120, 50, 8);
+      ctx.fill();
+      ctx.stroke();
+
+      ctx.fillStyle = "#38bdf8";
+      ctx.font = "bold 11px Inter, sans-serif";
+      ctx.textAlign = "center";
+      ctx.fillText("📷 INDUSTRIAL CAMERA", 300, 48);
+
+      // Lens Mount
+      ctx.fillStyle = "#0f172a";
+      ctx.fillRect(265, 70, 70, 25);
+      ctx.strokeRect(265, 70, 70, 25);
+      ctx.fillStyle = "#0284c7";
+      ctx.fillRect(275, 95, 50, 5);
+
+      // Conveyor
+      ctx.fillStyle = "#1e293b";
+      ctx.fillRect(60, 360, 480, 12);
+      ctx.fillStyle = "#334155";
+      ctx.font = "11px Inter, sans-serif";
+      ctx.textAlign = "left";
+      ctx.fillText("BĂNG TẢI SẢN PHẨM (CONVEYOR)", 70, 390);
+    }
+
+    function drawOpticalStage() {
+      drawStaticRig(rayCtx);
+
+      if (currentMode === 0) {
+        // BACKLIGHT
+        rayCtx.fillStyle = "rgba(255, 255, 255, 0.95)";
+        rayCtx.shadowColor = "#38bdf8";
+        rayCtx.shadowBlur = 20;
+        rayCtx.fillRect(160, 380, 280, 20);
+        rayCtx.strokeStyle = "#38bdf8";
+        rayCtx.strokeRect(160, 380, 280, 20);
+        rayCtx.shadowBlur = 0;
+
+        rayCtx.fillStyle = "#0284c7";
+        rayCtx.font = "bold 11px Inter, sans-serif";
+        rayCtx.textAlign = "center";
+        rayCtx.fillText("💡 TẤM ĐÈN ĐÁY (BACKLIGHT) PHÁT SÁNG LÊN", 300, 425);
+
+        rayCtx.fillStyle = "#64748b";
+        rayCtx.fillRect(260, 310, 80, 25);
+        rayCtx.fillRect(275, 335, 50, 25);
+        rayCtx.fillStyle = "#94a3b8";
+        rayCtx.font = "10px Inter, sans-serif";
+        rayCtx.fillText("Ốc Vít (Cản tia sáng)", 300, 326);
+
+        drawArrow(rayCtx, 200, 375, 200, 220, "rgba(56, 189, 248, 0.5)");
+        drawArrow(rayCtx, 400, 375, 400, 220, "rgba(56, 189, 248, 0.5)");
+
+      } else if (currentMode === 1) {
+        // LOW ANGLE RING
+        rayCtx.fillStyle = "#475569";
+        rayCtx.fillRect(160, 350, 280, 10);
+        rayCtx.fillStyle = "#cbd5e1";
+        rayCtx.font = "10px Inter, sans-serif";
+        rayCtx.textAlign = "center";
+        rayCtx.fillText("Mặt Kim Loại Phẳng (Phản xạ xa)", 300, 375);
+
+        rayCtx.strokeStyle = "#facc15";
+        rayCtx.lineWidth = 3;
+        rayCtx.beginPath();
+        rayCtx.moveTo(295, 349);
+        rayCtx.lineTo(305, 352);
+        rayCtx.stroke();
+
+        rayCtx.fillStyle = "#facc15";
+        rayCtx.font = "bold 11px Inter, sans-serif";
+        rayCtx.fillText("VẾT XƯỚC (Gây tán xạ ngược)", 300, 335);
+
+        rayCtx.fillStyle = "#e11d48";
+        rayCtx.shadowColor = "#f43f5e";
+        rayCtx.shadowBlur = 15;
+        rayCtx.fillRect(90, 345, 35, 15);
+        rayCtx.fillRect(475, 345, 35, 15);
+        rayCtx.shadowBlur = 0;
+
+        rayCtx.fillStyle = "#f43f5e";
+        rayCtx.font = "bold 10px Inter, sans-serif";
+        rayCtx.fillText("ĐÈN 15° (TRÁI)", 107, 335);
+        rayCtx.fillText("ĐÈN 15° (PHẢI)", 492, 335);
+
+        drawArrow(rayCtx, 130, 350, 270, 351, "rgba(244, 63, 94, 0.6)");
+        drawArrow(rayCtx, 470, 350, 330, 351, "rgba(244, 63, 94, 0.6)");
+        drawArrow(rayCtx, 300, 330, 300, 150, "rgba(250, 204, 21, 0.8)", "Tia tán xạ vào Lens ↑");
+
+      } else if (currentMode === 2) {
+        // COAXIAL
+        rayCtx.fillStyle = "#0284c7";
+        rayCtx.fillRect(190, 352, 220, 8);
+        rayCtx.fillStyle = "#38bdf8";
+        rayCtx.font = "bold 11px Inter, sans-serif";
+        rayCtx.textAlign = "center";
+        rayCtx.fillText("CHIP SILICON / MẶT GƯƠNG PHẲNG", 300, 380);
+
+        rayCtx.strokeStyle = "#38bdf8";
+        rayCtx.lineWidth = 1.5;
+        rayCtx.strokeRect(230, 160, 140, 120);
+
+        rayCtx.strokeStyle = "#fbbf24";
+        rayCtx.lineWidth = 3;
+        rayCtx.beginPath();
+        rayCtx.moveTo(250, 180);
+        rayCtx.lineTo(350, 280);
+        rayCtx.stroke();
+
+        rayCtx.fillStyle = "#fbbf24";
+        rayCtx.font = "bold 11px Inter, sans-serif";
+        rayCtx.fillText("Kính Beam Splitter 45°", 295, 220);
+
+        rayCtx.fillStyle = "#f59e0b";
+        rayCtx.shadowColor = "#fbbf24";
+        rayCtx.shadowBlur = 15;
+        rayCtx.fillRect(380, 200, 25, 45);
+        rayCtx.shadowBlur = 0;
+
+        rayCtx.fillStyle = "#fde68a";
+        rayCtx.font = "bold 10px Inter, sans-serif";
+        rayCtx.fillText("LED NGANG", 435, 225);
+
+        drawArrow(rayCtx, 375, 220, 310, 220, "rgba(251, 191, 36, 0.8)", "1. Bắn ngang");
+        drawArrow(rayCtx, 300, 235, 300, 340, "rgba(56, 189, 248, 0.8)", "2. Bẻ góc 90° xuống");
+        drawArrow(rayCtx, 305, 340, 305, 115, "rgba(255, 255, 255, 0.9)", "3. Phản xạ vào Lens ↑");
+
+      } else if (currentMode === 3) {
+        // DOME
+        rayCtx.fillStyle = "#94a3b8";
+        rayCtx.beginPath();
+        rayCtx.arc(300, 360, 35, Math.PI, 0);
+        rayCtx.fill();
+
+        rayCtx.fillStyle = "#e2e8f0";
+        rayCtx.font = "bold 11px Inter, sans-serif";
+        rayCtx.textAlign = "center";
+        rayCtx.fillText("VẬT THỂ CONG (VỎ LON / BI THÉP)", 300, 385);
+
+        rayCtx.strokeStyle = "#a855f7";
+        rayCtx.lineWidth = 4;
+        rayCtx.beginPath();
+        rayCtx.arc(300, 290, 130, Math.PI * 0.82, Math.PI * 0.18, true);
+        rayCtx.stroke();
+
+        rayCtx.clearRect(280, 155, 40, 10);
+
+        rayCtx.fillStyle = "#c084fc";
+        rayCtx.shadowColor = "#c084fc";
+        rayCtx.shadowBlur = 12;
+        rayCtx.fillRect(170, 340, 25, 15);
+        rayCtx.fillRect(405, 340, 25, 15);
+        rayCtx.shadowBlur = 0;
+
+        rayCtx.fillStyle = "#d8b4fe";
+        rayCtx.font = "bold 10px Inter, sans-serif";
+        rayCtx.fillText("LED BẮN LÊN", 182, 370);
+        rayCtx.fillText("LED BẮN LÊN", 417, 370);
+
+        drawArrow(rayCtx, 182, 335, 220, 200, "rgba(192, 132, 252, 0.6)");
+        drawArrow(rayCtx, 417, 335, 380, 200, "rgba(192, 132, 252, 0.6)");
+        drawArrow(rayCtx, 230, 210, 290, 335, "rgba(233, 213, 255, 0.7)");
+        drawArrow(rayCtx, 370, 210, 310, 335, "rgba(233, 213, 255, 0.7)");
+        
+        rayCtx.fillStyle = "#c084fc";
+        rayCtx.font = "11px Inter, sans-serif";
+        rayCtx.fillText("Tán xạ đa hướng 360° từ thành vòm", 300, 250);
+
+      } else if (currentMode === 4) {
+        // 5. HYBRID COAXIAL + DOME
+        rayCtx.fillStyle = "#cbd5e1";
+        rayCtx.fillRect(240, 348, 120, 12);
+        rayCtx.beginPath();
+        rayCtx.moveTo(210, 360); rayCtx.lineTo(240, 348); rayCtx.lineTo(240, 360); rayCtx.fill();
+        rayCtx.moveTo(390, 360); rayCtx.lineTo(360, 348); rayCtx.lineTo(360, 360); rayCtx.fill();
+        
+        rayCtx.fillStyle = "#e2e8f0";
+        rayCtx.beginPath(); rayCtx.arc(300, 348, 8, Math.PI, 0); rayCtx.fill();
+
+        rayCtx.fillStyle = "#f0abfc";
+        rayCtx.font = "bold 10px Inter, sans-serif";
+        rayCtx.textAlign = "center";
+        rayCtx.fillText("VẬT THỂ PHỨC TẠP: VỪA PHẲNG GƯƠNG, VỪA CONG 3D", 300, 385);
+
+        // Coaxial Box
+        rayCtx.strokeStyle = "#38bdf8";
+        rayCtx.lineWidth = 1.5;
+        rayCtx.strokeRect(240, 120, 120, 90);
+        rayCtx.strokeStyle = "#fbbf24";
+        rayCtx.lineWidth = 2.5;
+        rayCtx.beginPath(); rayCtx.moveTo(255, 135); rayCtx.lineTo(345, 205); rayCtx.stroke();
+        rayCtx.fillStyle = "#f59e0b";
+        rayCtx.fillRect(362, 155, 18, 35);
+        rayCtx.fillStyle = "#fef08a";
+        rayCtx.font = "bold 9px Inter, sans-serif";
+        rayCtx.fillText("COAX LED", 400, 175);
+
+        // Dome Box
+        rayCtx.strokeStyle = "#e879f9";
+        rayCtx.lineWidth = 3.5;
+        rayCtx.beginPath();
+        rayCtx.arc(300, 305, 115, Math.PI * 0.84, Math.PI * 0.16, true);
+        rayCtx.stroke();
+
+        rayCtx.clearRect(275, 190, 50, 10);
+        rayCtx.strokeStyle = "#38bdf8";
+        rayCtx.strokeRect(275, 190, 50, 10);
+        rayCtx.fillStyle = "#38bdf8";
+        rayCtx.font = "8px Inter, sans-serif";
+        rayCtx.fillText("LỖ THỦNG VÒM", 300, 198);
+
+        rayCtx.fillStyle = "#d946ef";
+        rayCtx.fillRect(175, 335, 22, 14);
+        rayCtx.fillRect(403, 335, 22, 14);
+        rayCtx.fillStyle = "#f5d0fe";
+        rayCtx.font = "bold 9px Inter, sans-serif";
+        rayCtx.fillText("DOME LED", 186, 362);
+        rayCtx.fillText("DOME LED", 414, 362);
+
+        drawArrow(rayCtx, 360, 172, 305, 172, "rgba(251, 191, 36, 0.7)");
+        drawArrow(rayCtx, 300, 180, 300, 340, "rgba(56, 189, 248, 0.8)", "Coaxial chiếu tâm phẳng");
+        drawArrow(rayCtx, 185, 330, 240, 240, "rgba(232, 121, 249, 0.6)");
+        drawArrow(rayCtx, 250, 245, 240, 345, "rgba(245, 208, 254, 0.7)", "Dome chiếu viền cong");
+      }
+
+      particles.forEach(p => {
+        p.update();
+        p.draw(rayCtx);
+      });
+    }
+
+    function drawArrow(ctx, fromx, fromy, tox, toy, color, label = "") {
+      const headlen = 7;
+      const dx = tox - fromx;
+      const dy = toy - fromy;
+      const angle = Math.atan2(dy, dx);
+      ctx.save();
+      ctx.strokeStyle = color;
+      ctx.fillStyle = color;
+      ctx.lineWidth = 1.5;
+      ctx.beginPath();
+      ctx.moveTo(fromx, fromy);
+      ctx.lineTo(tox, toy);
+      ctx.stroke();
+
+      ctx.beginPath();
+      ctx.moveTo(tox, toy);
+      ctx.lineTo(tox - headlen * Math.cos(angle - Math.PI / 6), toy - headlen * Math.sin(angle - Math.PI / 6));
+      ctx.lineTo(tox - headlen * Math.cos(angle + Math.PI / 6), toy - headlen * Math.sin(angle + Math.PI / 6));
+      ctx.fill();
+
+      if (label) {
+        ctx.font = "bold 10px Inter, sans-serif";
+        ctx.textAlign = "center";
+        ctx.fillText(label, (fromx + tox) / 2 + 10, (fromy + toy) / 2);
+      }
+      ctx.restore();
+    }
+
+    function drawSensorFeed() {
+      sensorCtx.fillStyle = "#000000";
+      sensorCtx.fillRect(0, 0, 600, 450);
+
+      if (currentMode === 0) {
+        // BACKLIGHT
+        sensorCtx.fillStyle = "#f8fafc";
+        sensorCtx.fillRect(0, 0, 600, 450);
+
+        sensorCtx.fillStyle = "#090d16";
+        sensorCtx.beginPath();
+        sensorCtx.roundRect(190, 80, 220, 80, 6);
+        sensorCtx.fill();
+        sensorCtx.fillRect(230, 160, 140, 220);
+
+        for (let y = 175; y <= 360; y += 22) {
+          sensorCtx.beginPath();
+          sensorCtx.moveTo(230, y); sensorCtx.lineTo(212, y + 11); sensorCtx.lineTo(230, y + 22); sensorCtx.fill();
+          sensorCtx.beginPath();
+          sensorCtx.moveTo(370, y); sensorCtx.lineTo(388, y + 11); sensorCtx.lineTo(370, y + 22); sensorCtx.fill();
+        }
+
+        sensorCtx.strokeStyle = "#16a34a";
+        sensorCtx.lineWidth = 2;
+        sensorCtx.beginPath();
+        sensorCtx.moveTo(170, 120); sensorCtx.lineTo(190, 120);
+        sensorCtx.moveTo(410, 120); sensorCtx.lineTo(430, 120);
+        sensorCtx.moveTo(180, 105); sensorCtx.lineTo(180, 135);
+        sensorCtx.moveTo(420, 105); sensorCtx.lineTo(420, 135);
+        sensorCtx.moveTo(180, 120); sensorCtx.lineTo(420, 120);
+        sensorCtx.stroke();
+
+        sensorCtx.fillStyle = "#15803d";
+        sensorCtx.font = "bold 13px Inter, sans-serif";
+        sensorCtx.textAlign = "center";
+        sensorCtx.fillText("RỘNG ĐẦU BULÔNG: 14.025 mm [PASS]", 300, 65);
+
+        sensorCtx.beginPath();
+        sensorCtx.moveTo(200, 280); sensorCtx.lineTo(400, 280);
+        sensorCtx.stroke();
+        sensorCtx.fillText("ĐƯỜNG KÍNH REN Ø: 8.002 mm [PASS]", 300, 270);
+
+      } else if (currentMode === 1) {
+        // LOW-ANGLE RING
+        sensorCtx.fillStyle = "#080c14";
+        sensorCtx.fillRect(0, 0, 600, 450);
+
+        sensorCtx.strokeStyle = "#1e293b";
+        sensorCtx.lineWidth = 2;
+        sensorCtx.strokeRect(80, 60, 440, 330);
+
+        sensorCtx.fillStyle = "rgba(255, 255, 255, 0.05)";
+        sensorCtx.fillText("Nền kim loại bóng phản xạ lệch -> Tối đen (Darkfield)", 300, 100);
+
+        sensorCtx.save();
+        sensorCtx.strokeStyle = "#ffffff";
+        sensorCtx.lineWidth = 3.5;
+        sensorCtx.shadowColor = "#f43f5e";
+        sensorCtx.shadowBlur = 18;
+
+        sensorCtx.beginPath();
+        sensorCtx.moveTo(160, 260);
+        sensorCtx.lineTo(240, 210);
+        sensorCtx.lineTo(330, 270);
+        sensorCtx.lineTo(420, 180);
+        sensorCtx.stroke();
+
+        sensorCtx.shadowBlur = 0;
+        sensorCtx.restore();
+
+        sensorCtx.strokeStyle = "#ef4444";
+        sensorCtx.lineWidth = 2;
+        sensorCtx.strokeRect(140, 160, 310, 130);
+
+        sensorCtx.fillStyle = "#ef4444";
+        sensorCtx.font = "bold 14px Inter, sans-serif";
+        sensorCtx.textAlign = "center";
+        sensorCtx.fillText("PHÁT HIỆN LỖI: VẾT XƯỚC KIM LOẠI (NG)", 295, 145);
+
+        sensorCtx.fillStyle = "#f87171";
+        sensorCtx.font = "11px Inter, sans-serif";
+        sensorCtx.fillText("Cường độ sáng: 248/255 | Chiều dài: 4.82mm", 295, 310);
+
+      } else if (currentMode === 2) {
+        // COAXIAL
+        sensorCtx.fillStyle = "#0a0e1a";
+        sensorCtx.fillRect(0, 0, 600, 450);
+
+        sensorCtx.fillStyle = "#cbd5e1";
+        sensorCtx.beginPath();
+        sensorCtx.roundRect(110, 60, 380, 330, 12);
+        sensorCtx.fill();
+
+        sensorCtx.fillStyle = "#0f172a";
+        sensorCtx.font = "bold 18px Inter, sans-serif";
+        sensorCtx.textAlign = "center";
+        sensorCtx.fillText("APPLE A18 PRO BIONIC", 300, 120);
+
+        sensorCtx.font = "11px Inter, sans-serif";
+        sensorCtx.fillText("TSMC 3nm FINFET • SERIAL: SN-2026-SPTG-8869", 300, 145);
+
+        sensorCtx.fillRect(230, 175, 140, 140);
+        sensorCtx.fillStyle = "#f8fafc";
+        sensorCtx.fillRect(240, 185, 36, 36);
+        sensorCtx.fillRect(324, 185, 36, 36);
+        sensorCtx.fillRect(240, 269, 36, 36);
+        sensorCtx.fillStyle = "#0f172a";
+        sensorCtx.fillRect(248, 193, 20, 20);
+        sensorCtx.fillRect(332, 193, 20, 20);
+        sensorCtx.fillRect(248, 277, 20, 20);
+
+        for (let i = 0; i < 6; i++) {
+          for (let j = 0; j < 6; j++) {
+            if ((i + j) % 2 === 0) sensorCtx.fillRect(285 + (i * 7), 230 + (j * 7), 5, 5);
+          }
+        }
+
+        sensorCtx.fillStyle = "#0284c7";
+        sensorCtx.font = "bold 13px Inter, sans-serif";
+        sensorCtx.fillText("✓ 100% TRIỆT TIÊU ĐỐM LÓA GƯƠNG (NO HOTSPOT)", 300, 350);
+
+        sensorCtx.fillStyle = "#059669";
+        sensorCtx.font = "bold 12px Inter, sans-serif";
+        sensorCtx.fillText("ĐỘ TƯƠNG PHẢN QR CODE: 99.8% [ĐỌC TRONG 2ms]", 300, 375);
+
+      } else if (currentMode === 3) {
+        // DOME
+        sensorCtx.fillStyle = "#0a0e1a";
+        sensorCtx.fillRect(0, 0, 600, 450);
+
+        const grad = sensorCtx.createRadialGradient(300, 225, 20, 300, 225, 160);
+        grad.addColorStop(0, "#f8fafc");
+        grad.addColorStop(0.5, "#cbd5e1");
+        grad.addColorStop(0.9, "#64748b");
+        grad.addColorStop(1, "#334155");
+
+        sensorCtx.fillStyle = grad;
+        sensorCtx.beginPath();
+        sensorCtx.arc(300, 225, 160, 0, Math.PI * 2);
+        sensorCtx.fill();
+
+        sensorCtx.strokeStyle = "#475569";
+        sensorCtx.lineWidth = 3;
+        sensorCtx.beginPath();
+        sensorCtx.arc(300, 225, 135, 0, Math.PI * 2);
+        sensorCtx.stroke();
+
+        sensorCtx.fillStyle = "#090d16";
+        sensorCtx.font = "bold 16px Inter, sans-serif";
+        sensorCtx.textAlign = "center";
+        sensorCtx.fillText("HẠN DÙNG (EXP): 31/12/2028", 300, 205);
+        sensorCtx.font = "bold 13px Inter, sans-serif";
+        sensorCtx.fillText("LOT: #VN-SPORTAGE-A88", 300, 235);
+        sensorCtx.font = "12px Inter, sans-serif";
+        sensorCtx.fillText("XUẤT XỨ: HIGH-TECH AUTOMATION VIETNAM", 300, 260);
+
+        sensorCtx.fillStyle = "#9333ea";
+        sensorCtx.font = "bold 13px Inter, sans-serif";
+        sensorCtx.fillText("TÁN XẠ TOÀN DIỆN 360° • KHÔNG BỊ LÓA CỤC BỘ", 300, 420);
+
+      } else if (currentMode === 4) {
+        // 5. HYBRID COAXIAL + DOME SENSOR FEED
+        sensorCtx.fillStyle = "#090d16";
+        sensorCtx.fillRect(0, 0, 600, 450);
+
+        const outerGrad = sensorCtx.createRadialGradient(300, 225, 110, 300, 225, 175);
+        outerGrad.addColorStop(0, "#cbd5e1");
+        outerGrad.addColorStop(0.7, "#94a3b8");
+        outerGrad.addColorStop(1, "#475569");
+        sensorCtx.fillStyle = outerGrad;
+        sensorCtx.beginPath(); sensorCtx.arc(300, 225, 175, 0, Math.PI * 2); sensorCtx.fill();
+
+        const flatGrad = sensorCtx.createLinearGradient(160, 120, 440, 330);
+        flatGrad.addColorStop(0, "#f1f5f9");
+        flatGrad.addColorStop(1, "#e2e8f0");
+        sensorCtx.fillStyle = flatGrad;
+        sensorCtx.beginPath(); sensorCtx.arc(300, 225, 130, 0, Math.PI * 2); sensorCtx.fill();
+
+        sensorCtx.strokeStyle = "#64748b";
+        sensorCtx.lineWidth = 2;
+        sensorCtx.beginPath(); sensorCtx.arc(300, 225, 130, 0, Math.PI * 2); sensorCtx.stroke();
+
+        const rivetGrad = sensorCtx.createRadialGradient(300, 225, 2, 300, 225, 18);
+        rivetGrad.addColorStop(0, "#ffffff");
+        rivetGrad.addColorStop(0.6, "#cbd5e1");
+        rivetGrad.addColorStop(1, "#64748b");
+        sensorCtx.fillStyle = rivetGrad;
+        sensorCtx.beginPath(); sensorCtx.arc(300, 225, 18, 0, Math.PI * 2); sensorCtx.fill();
+
+        sensorCtx.strokeStyle = "#334155";
+        sensorCtx.lineWidth = 4;
+        sensorCtx.beginPath();
+        sensorCtx.roundRect(260, 150, 80, 130, 25);
+        sensorCtx.stroke();
+        sensorCtx.beginPath();
+        sensorCtx.arc(300, 185, 20, 0, Math.PI * 2);
+        sensorCtx.stroke();
+
+        sensorCtx.fillStyle = "#0f172a";
+        sensorCtx.font = "bold 13px Inter, sans-serif";
+        sensorCtx.textAlign = "center";
+        sensorCtx.fillText("SPORTAGE • AOI VERIFIED", 300, 310);
+        sensorCtx.font = "11px Inter, sans-serif";
+        sensorCtx.fillText("QC PASS #9982-A", 300, 328);
+
+        sensorCtx.fillStyle = "#0284c7";
+        sensorCtx.font = "bold 12px Inter, sans-serif";
+        sensorCtx.fillText("✓ KHÔNG ĐỐM ĐEN LỖ CAMERA (COAXIAL LẤP ĐẦY TÂM)", 300, 48);
+
+        sensorCtx.fillStyle = "#a855f7";
+        sensorCtx.font = "bold 12px Inter, sans-serif";
+        sensorCtx.fillText("✓ KHÔNG TỐI VIỀN VÁT CONG (DOME TÁN XẠ 360° BAO PHỦ)", 300, 422);
+
+        sensorCtx.strokeStyle = "#10b981";
+        sensorCtx.lineWidth = 2;
+        sensorCtx.strokeRect(275, 200, 50, 50);
+        sensorCtx.fillStyle = "#10b981";
+        sensorCtx.font = "bold 10px monospace";
+        sensorCtx.fillText("RIVET: OK (3.20mm)", 300, 265);
+      }
+    }
+
+    // ===== 3D RIG + PHOTON SYSTEM (Three.js) =====
+    function buildStage3D(mode) {
+      clearStage();
+      // Camera + Lens
+      const camBody = new THREE.Mesh(
+        new THREE.BoxGeometry(1.2, 0.8, 1.2),
+        new THREE.MeshStandardMaterial({ color: 0x1e293b, roughness: 0.6, metalness: 0.3 })
+      );
+      camBody.position.y = 3.4;
+      stageGroup.add(camBody);
+      const lens = new THREE.Mesh(
+        new THREE.CylinderGeometry(0.25, 0.32, 0.85, 20),
+        new THREE.MeshStandardMaterial({ color: 0x0f172a, roughness: 0.4, metalness: 0.5 })
+      );
+      lens.position.y = 2.6;
+      stageGroup.add(lens);
+      const tip = new THREE.Mesh(
+        new THREE.CylinderGeometry(0.28, 0.28, 0.06, 20),
+        new THREE.MeshStandardMaterial({ color: 0x38bdf8, emissive: 0x38bdf8, emissiveIntensity: 0.8 })
+      );
+      tip.position.y = 2.18;
+      stageGroup.add(tip);
+
+      // Conveyor
+      const belt = new THREE.Mesh(
+        new THREE.BoxGeometry(5, 0.16, 1.3),
+        new THREE.MeshStandardMaterial({ color: 0x1e293b, roughness: 0.8, metalness: 0.2 })
+      );
+      belt.position.y = 0.08;
+      stageGroup.add(belt);
+      const beltTop = new THREE.Mesh(
+        new THREE.BoxGeometry(4.7, 0.03, 1.2),
+        new THREE.MeshStandardMaterial({ color: 0x334155, roughness: 0.5, metalness: 0.3 })
+      );
+      beltTop.position.y = 0.175;
+      stageGroup.add(beltTop);
+
+      // Bolt
+      const boltMat = new THREE.MeshStandardMaterial({ color: 0x94a3b8, roughness: 0.35, metalness: 0.9 });
+      const shaft = new THREE.Mesh(new THREE.CylinderGeometry(0.28, 0.30, 0.7, 20), boltMat);
+      shaft.position.y = 0.5;
+      stageGroup.add(shaft);
+      const head = new THREE.Mesh(new THREE.CylinderGeometry(0.42, 0.42, 0.18, 6), boltMat);
+      head.position.y = 0.93;
+      stageGroup.add(head);
+
+      // Mode-specific
+      if (mode === 0) {
+        const panel = new THREE.Mesh(
+          new THREE.BoxGeometry(3.4, 0.1, 1.2),
+          new THREE.MeshStandardMaterial({ color: 0x7dd3fc, emissive: 0x7dd3fc, emissiveIntensity: 1.5 })
+        );
+        panel.position.y = -0.12;
+        stageGroup.add(panel);
+      } else if (mode === 1) {
+        const barMat = new THREE.MeshStandardMaterial({ color: 0xf43f5e, emissive: 0xf43f5e, emissiveIntensity: 1.4 });
+        for (const s of [-1, 1]) {
+          const bar = new THREE.Mesh(new THREE.BoxGeometry(1.0, 0.1, 0.13), barMat);
+          bar.position.set(s * 2.1, 0.35, 0);
+          bar.rotation.z = s * -0.25;
+          stageGroup.add(bar);
+        }
+        const scratch = new THREE.Mesh(
+          new THREE.BoxGeometry(0.55, 0.02, 0.05),
+          new THREE.MeshStandardMaterial({ color: 0xfacc15, emissive: 0xfacc15, emissiveIntensity: 1.8 })
+        );
+        scratch.position.set(0.05, 1.03, 0.1);
+        scratch.rotation.y = 0.5;
+        stageGroup.add(scratch);
+      } else if (mode === 2) {
+        const bsMat = new THREE.MeshPhysicalMaterial({
+          color: 0x7dd3fc, transparent: true, opacity: 0.4, side: THREE.DoubleSide,
+          metalness: 0.1, roughness: 0.1
+        });
+        const bsGeo = new THREE.PlaneGeometry(1.3, 1.3);
+        bsGeo.rotateY(Math.PI / 2);
+        const bs = new THREE.Mesh(bsGeo, bsMat);
+        bs.position.set(0, 1.8, 0);
+        bs.rotation.set(0, 0, Math.PI / 4);
+        stageGroup.add(bs);
+        const led = new THREE.Mesh(
+          new THREE.BoxGeometry(0.17, 0.45, 0.17),
+          new THREE.MeshStandardMaterial({ color: 0xfbbf24, emissive: 0xfbbf24, emissiveIntensity: 1.5 })
+        );
+        led.position.set(1.45, 1.8, 0);
+        stageGroup.add(led);
+        const mirror = new THREE.Mesh(
+          new THREE.CylinderGeometry(0.40, 0.40, 0.04, 24),
+          new THREE.MeshStandardMaterial({ color: 0xe2e8f0, roughness: 0.05, metalness: 1.0 })
+        );
+        mirror.position.y = 1.03;
+        stageGroup.add(mirror);
+      } else if (mode === 3) {
+        const dome = new THREE.Mesh(
+          new THREE.SphereGeometry(1.4, 24, 12, 0, Math.PI * 2, 0, Math.PI / 2),
+          new THREE.MeshPhysicalMaterial({
+            color: 0xa855f7, transparent: true, opacity: 0.18,
+            side: THREE.DoubleSide, roughness: 0.5
+          })
+        );
+        dome.position.set(0, 0.8, 0);
+        stageGroup.add(dome);
+        const ledMat = new THREE.MeshStandardMaterial({ color: 0xc084fc, emissive: 0xc084fc, emissiveIntensity: 1.4 });
+        for (let i = 0; i < 8; i++) {
+          const a = (i / 8) * Math.PI * 2;
+          const led = new THREE.Mesh(new THREE.SphereGeometry(0.07, 8, 8), ledMat);
+          led.position.set(Math.cos(a) * 1.35, 0.15, Math.sin(a) * 1.35);
+          stageGroup.add(led);
+        }
+        const ball = new THREE.Mesh(
+          new THREE.SphereGeometry(0.5, 24, 24),
+          new THREE.MeshStandardMaterial({ color: 0xcbd5e1, roughness: 0.15, metalness: 0.9 })
+        );
+        ball.position.y = 0.55;
+        stageGroup.add(ball);
+      } else {
+        const dome = new THREE.Mesh(
+          new THREE.SphereGeometry(1.4, 24, 12, 0, Math.PI * 2, 0, Math.PI / 2),
+          new THREE.MeshPhysicalMaterial({
+            color: 0xe879f9, transparent: true, opacity: 0.16,
+            side: THREE.DoubleSide, roughness: 0.5
+          })
+        );
+        dome.position.set(0, 0.8, 0);
+        stageGroup.add(dome);
+        const ledMat = new THREE.MeshStandardMaterial({ color: 0xe879f9, emissive: 0xe879f9, emissiveIntensity: 1.3 });
+        for (let i = 0; i < 8; i++) {
+          const a = (i / 8) * Math.PI * 2;
+          const led = new THREE.Mesh(new THREE.SphereGeometry(0.07, 8, 8), ledMat);
+          led.position.set(Math.cos(a) * 1.35, 0.15, Math.sin(a) * 1.35);
+          stageGroup.add(led);
+        }
+        const bsMat = new THREE.MeshPhysicalMaterial({
+          color: 0x7dd3fc, transparent: true, opacity: 0.4, side: THREE.DoubleSide
+        });
+        const bsGeo = new THREE.PlaneGeometry(1.2, 1.2);
+        bsGeo.rotateY(Math.PI / 2);
+        const bs = new THREE.Mesh(bsGeo, bsMat);
+        bs.position.set(0, 2.0, 0);
+        bs.rotation.set(0, 0, Math.PI / 4);
+        stageGroup.add(bs);
+        const led = new THREE.Mesh(
+          new THREE.BoxGeometry(0.16, 0.4, 0.16),
+          new THREE.MeshStandardMaterial({ color: 0xfbbf24, emissive: 0xfbbf24, emissiveIntensity: 1.5 })
+        );
+        led.position.set(1.4, 2.0, 0);
+        stageGroup.add(led);
+      }
+    }
+
+    function clearStage() {
+      while (stageGroup.children.length) {
+        const c = stageGroup.children[0];
+        stageGroup.remove(c);
+        if (c.geometry) c.geometry.dispose();
+        if (c.material) c.material.dispose();
+      }
+    }
+
+    // Photon 3D: quả cầu phát quang bay theo 3D path
+    class Photon3D {
+      constructor(mode) {
+        this.mesh = new THREE.Mesh(
+          new THREE.SphereGeometry(0.04, 8, 8),
+          new THREE.MeshBasicMaterial({ color: 0x38bdf8 })
+        );
+        this.mesh.material.transparent = true;
+        this.mesh.renderOrder = 999;
+        scene.add(this.mesh);
+        this.reset(mode);
+      }
+      reset(mode) {
+        this.mode = mode;
+        this.progress = Math.random();
+        this.speed = 0.008 + Math.random() * 0.006;
+        this.buildPath();
+        this.applyPos(0);
+      }
+      buildPath() {
+        const m = this.mode;
+        this.pts = [];
+        this.cols = [];
+        if (m === 0) {
+          const x = -1.5 + Math.random() * 3;
+          const z = -0.45 + Math.random() * 0.9;
+          const blocked = Math.abs(x) < 0.42;
+          this.pts = blocked
+            ? [[x, -0.1, z], [x, 0.94, z]]
+            : [[x, -0.1, z], [x * 0.2, 2.8, z * 0.2]];
+          this.cols = blocked ? [0xff6b6b] : [0x38bdf8];
+        } else if (m === 1) {
+          const side = Math.random() > 0.5 ? -1 : 1;
+          const hits = Math.random() > 0.45;
+          if (hits) {
+            this.pts = [[side * 2.1, 0.38, 0], [0, 0.5, 0.1], [0.05, 1.03, 0.1], [0, 2.8, 0]];
+            this.cols = [0xf43f5e, 0xf43f5e, 0xfacc15];
+          } else {
+            this.pts = [[side * 2.1, 0.38, 0], [-side * 2.1, 0.35, 0]];
+            this.cols = [0xf43f5e, 0xfb7185];
+          }
+        } else if (m === 2) {
+          this.pts = [[1.45, 1.8, 0], [0, 1.8, 0], [0, 1.05, 0], [0, 2.8, 0]];
+          this.cols = [0xfbbf24, 0x38bdf8, 0xffffff];
+        } else if (m === 3) {
+          const a = Math.random() * Math.PI * 2;
+          const sx = Math.cos(a) * 1.35, sz = Math.sin(a) * 1.35;
+          const domeY = 0.8 + Math.sqrt(Math.max(0, 1.4 * 1.4 - 1.1 * 1.1));
+          const land = [(Math.random() - 0.5) * 0.7, 0.35 + Math.random() * 0.2, (Math.random() - 0.5) * 0.7];
+          this.pts = [[sx, 0.15, sz], [Math.cos(a) * 1.1, domeY, Math.sin(a) * 1.1], land];
+          this.cols = [0xc084fc, 0xe9d5ff];
+        } else {
+          if (Math.random() > 0.5) {
+            this.pts = [[1.4, 2.0, 0], [0, 2.0, 0], [0, 1.05, 0], [0, 2.8, 0]];
+            this.cols = [0xfbbf24, 0x38bdf8, 0xffffff];
+          } else {
+            const a = Math.random() * Math.PI * 2;
+            this.pts = [
+              [Math.cos(a) * 1.35, 0.15, Math.sin(a) * 1.35],
+              [Math.cos(a) * 1.1, 2.2, Math.sin(a) * 1.1],
+              [(Math.random() - 0.5) * 0.7, 0.4, (Math.random() - 0.5) * 0.7]
+            ];
+            this.cols = [0xe879f9, 0xf5d0fe];
+          }
+        }
+      }
+      applyPos(i) {
+        const p = this.pts[i];
+        this.mesh.position.set(p[0], p[1], p[2]);
+        if (this.cols[i]) this.mesh.material.color.setHex(this.cols[i]);
+      }
+      update() {
+        if (!isPlaying) return;
+        this.progress += this.speed;
+        if (this.progress >= 1) { this.reset(this.mode); return; }
+        const total = this.pts.length - 1;
+        const f = this.progress * total;
+        const i = Math.min(Math.floor(f), total - 1);
+        const t = f - i;
+        const a = this.pts[i], b = this.pts[i + 1];
+        this.mesh.position.set(
+          a[0] + (b[0] - a[0]) * t,
+          a[1] + (b[1] - a[1]) * t,
+          a[2] + (b[2] - a[2]) * t
+        );
+        if (this.cols[i]) this.mesh.material.color.setHex(this.cols[i]);
+      }
+    }
+
+    function initPhotons3D() {
+      photonMeshes.forEach(p => scene.remove(p.mesh));
+      photonMeshes = [];
+      const count = currentMode === 4 ? 50 : 38;
+      for (let i = 0; i < count; i++) {
+        const p = new Photon3D(currentMode);
+        photonMeshes.push(p);
+      }
+    }
+
+    function resize3D() {
+      const w = ray3dEl.clientWidth, h = ray3dEl.clientHeight;
+      if (!w || !h) return;
+      camera3d.aspect = w / h;
+      camera3d.updateProjectionMatrix();
+      renderer3d.setSize(w, h);
+    }
+    window.addEventListener('resize', resize3D);
+
+    function render() {
+      const w = ray3dEl.clientWidth, h = ray3dEl.clientHeight;
+      if (w && h && (renderer3d.domElement.width !== Math.round(w * (window.devicePixelRatio || 1)))) {
+        renderer3d.setSize(w, h);
+        camera3d.aspect = w / h;
+        camera3d.updateProjectionMatrix();
+      }
+      photonMeshes.forEach(p => p.update());
+      controls.update();
+      renderer3d.render(scene, camera3d);
+      drawSensorFeed();
+      requestAnimationFrame(render);
+    }
+
+    // ===== FAKE-3D: gắn tilt + glare cho mọi [data-tilt] =====
+    function attachTilt(el, maxDeg) {
+      const glare = document.createElement('div');
+      glare.className = 'tilt-glare';
+      el.appendChild(glare);
+
+      el.addEventListener('mousemove', (e) => {
+        const r = el.getBoundingClientRect();
+        const px = (e.clientX - r.left) / r.width;
+        const py = (e.clientY - r.top) / r.height;
+        el.classList.add('tilting');
+        el.style.transform =
+          `perspective(900px) rotateX(${((0.5 - py) * maxDeg * 2).toFixed(2)}deg)` +
+          ` rotateY(${((px - 0.5) * maxDeg * 2).toFixed(2)}deg) translateZ(8px)`;
+        glare.style.setProperty('--gx', (px * 100).toFixed(1) + '%');
+        glare.style.setProperty('--gy', (py * 100).toFixed(1) + '%');
+        glare.style.opacity = '1';
+      });
+
+      el.addEventListener('mouseleave', () => {
+        el.classList.remove('tilting');
+        el.style.transform = '';
+        glare.style.opacity = '0';
+      });
+    }
+    document.querySelectorAll('[data-tilt]').forEach(el => {
+      attachTilt(el, parseFloat(el.getAttribute('data-tilt')) || 8);
+    });
+
+    resize3D();
+    setMode(0);
+    render();
+  </script>
+</body>
+</html>

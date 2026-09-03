@@ -1,0 +1,1096 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>BÀI THI TỐT NGHIỆP KHÓA 1: 50 CÂU HỎI MACHINE VISION & PC CONTROL (45 PHÚT)</title>
+  <script src="https://www.gstatic.com/antigravity/web/dev/tailwindcss.min.js"></script>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;700;800&family=Inter:wght@400;500;600;700;800&display=swap');
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      background: radial-gradient(ellipse 80% 50% at 50% -10%, rgba(56, 189, 248, 0.12), transparent), #020617;
+      min-height: 100vh;
+    }
+    .font-mono { font-family: 'JetBrains Mono', monospace; }
+    .glass-panel { background: rgba(15, 23, 42, 0.9) !important; backdrop-filter: blur(14px); }
+    @keyframes pulse-red {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50% { opacity: 0.85; transform: scale(1.03); }
+    }
+    .timer-warning {
+      animation: pulse-red 1s infinite ease-in-out;
+      color: #f87171 !important;
+      border-color: #ef4444 !important;
+    }
+  </style>
+</head>
+<body class="bg-slate-950 text-slate-100 p-3 sm:p-6 min-h-screen">
+  
+  <div class="max-w-5xl mx-auto space-y-4">
+    
+    <!-- STICKY TOP HUD (TIMER + PROGRESS + SUBMIT) -->
+    <header class="sticky top-2 z-50 glass-panel border border-slate-800 rounded-2xl p-4 shadow-2xl shadow-slate-950/80 flex flex-wrap items-center justify-between gap-4">
+      <div>
+        <div class="flex items-center gap-2">
+          <span class="px-2.5 py-0.5 rounded-full text-xs font-bold bg-sky-500/20 text-sky-400 border border-sky-500/30">
+            CHIẾN DỊCH SPORTAGE • KHÓA 1
+          </span>
+          <span class="text-xs font-mono text-amber-400 font-bold">CHẾ ĐỘ THI THẬT (45 PHÚT)</span>
+        </div>
+        <h1 class="text-lg sm:text-xl font-black text-white mt-0.5">SÁT HẠCH KỸ SƯ MACHINE VISION & PC CONTROL</h1>
+      </div>
+
+      <!-- Center: 45:00 Countdown Timer -->
+      <div class="flex items-center gap-3">
+        <div id="timerCard" class="px-4 py-2 rounded-xl bg-slate-900 border border-slate-700 font-mono text-center shadow-inner">
+          <div class="text-[10px] text-slate-400 font-bold uppercase tracking-wider">THỜI GIAN CÒN LẠI</div>
+          <div id="timerDisplay" class="text-2xl sm:text-3xl font-black text-amber-400">45:00</div>
+        </div>
+
+        <div class="space-y-1">
+          <button id="btnTimerControl" onclick="toggleTimer()" class="w-full px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold text-xs font-mono transition">
+            ⏸ Tạm dừng
+          </button>
+          <button onclick="resetExam()" class="w-full px-3 py-1.5 rounded-lg bg-slate-900 hover:bg-slate-800 text-slate-400 font-bold text-xs font-mono transition">
+            🔄 Làm lại
+          </button>
+        </div>
+      </div>
+
+      <!-- Right: Progress & Submit Button -->
+      <div class="flex items-center gap-4 font-mono">
+        <div class="text-right">
+          <div class="text-xs text-slate-400">ĐÃ CHỌN:</div>
+          <div class="text-xl font-black text-sky-400"><span id="answeredCount">0</span>/50</div>
+        </div>
+
+        <button id="btnSubmitTop" onclick="confirmSubmit()" class="px-5 py-3 rounded-xl bg-gradient-to-r from-emerald-600 to-sky-600 hover:from-emerald-500 hover:to-sky-500 text-white font-black text-sm uppercase tracking-wider shadow-lg shadow-emerald-600/30 transition transform active:scale-95">
+          🚀 NỘP BÀI
+        </button>
+      </div>
+    </header>
+
+    <!-- Certificate & Result Summary Box (Shown AFTER Submitting) -->
+    <div id="certificateBox" class="glass-panel border-2 border-emerald-500/60 rounded-2xl p-6 text-center space-y-4 hidden shadow-2xl">
+      <div class="text-5xl animate-bounce">🎓 🚗 🏆</div>
+      <h2 class="text-2xl sm:text-3xl font-black text-white">KẾT QUẢ BÀI THI SÁT HẠCH KHÓA 1</h2>
+      
+      <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 max-w-2xl mx-auto font-mono py-2">
+        <div class="p-3 rounded-xl bg-slate-900 border border-slate-800">
+          <div class="text-[10px] text-slate-400">TỔNG ĐIỂM</div>
+          <div id="resPercent" class="text-2xl font-black text-amber-400">0.0%</div>
+        </div>
+        <div class="p-3 rounded-xl bg-slate-900 border border-slate-800">
+          <div class="text-[10px] text-emerald-400">SỐ CÂU ĐÚNG</div>
+          <div id="resCorrect" class="text-2xl font-black text-emerald-400">0/50</div>
+        </div>
+        <div class="p-3 rounded-xl bg-slate-900 border border-slate-800">
+          <div class="text-[10px] text-rose-400">SỐ CÂU SAI</div>
+          <div id="resWrong" class="text-2xl font-black text-rose-400">0/50</div>
+        </div>
+        <div class="p-3 rounded-xl bg-slate-900 border border-slate-800">
+          <div class="text-[10px] text-sky-400">XẾP LOẠI</div>
+          <div id="resRank" class="text-2xl font-black text-sky-400">-</div>
+        </div>
+      </div>
+
+      <p id="certSummary" class="text-sm text-slate-300 max-w-xl mx-auto leading-relaxed"></p>
+      
+      <div class="text-xs font-mono text-slate-400 pt-1">
+        👇 Cuộn xuống dưới để xem chi tiết đáp án chuẩn và giải thích kỹ thuật cho từng câu hỏi!
+      </div>
+    </div>
+
+    <!-- QUESTION NAVIGATION MAP (1 - 50) -->
+    <div class="glass-panel border border-slate-800 rounded-2xl p-4 space-y-2">
+      <div class="flex items-center justify-between flex-wrap gap-2">
+        <span class="text-xs font-mono font-bold text-slate-300 uppercase tracking-wider">🗺️ BẢN ĐỒ 50 CÂU HỎI (BẤM ĐỂ NHẢY NHANH):</span>
+        <div id="mapLegend" class="flex items-center gap-3 text-[11px] font-mono text-slate-400">
+          <span class="flex items-center gap-1"><span class="w-2.5 h-2.5 rounded bg-slate-900 border border-slate-700"></span> Chưa chọn</span>
+          <span class="flex items-center gap-1"><span class="w-2.5 h-2.5 rounded bg-sky-600"></span> Đã chọn</span>
+        </div>
+      </div>
+      <div id="navMap" class="grid grid-cols-10 sm:grid-cols-25 gap-1.5 pt-1"></div>
+    </div>
+
+    <!-- Questions Container -->
+    <div id="questionsContainer" class="space-y-4"></div>
+
+    <!-- Bottom Big Submit Button -->
+    <div id="bottomSubmitCard" class="glass-panel border border-slate-800 rounded-2xl p-6 text-center space-y-3">
+      <div class="text-sm text-slate-400">Bạn đã hoàn thành bài thi chưa? Hãy kiểm tra lại bản đồ 50 câu trước khi nộp nhé!</div>
+      <button onclick="confirmSubmit()" class="px-8 py-3.5 rounded-xl bg-gradient-to-r from-emerald-600 to-sky-600 hover:from-emerald-500 hover:to-sky-500 text-white font-black text-base uppercase tracking-wider shadow-xl shadow-emerald-600/30 transition transform active:scale-95">
+        🚀 NỘP BÀI VÀ XEM ĐÁP ÁN CHI TIẾT
+      </button>
+    </div>
+
+  </div>
+
+  <!-- Time Out Modal -->
+  <div id="timeOutModal" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+    <div class="glass-panel border border-rose-500 rounded-2xl p-6 max-w-md w-full text-center space-y-4 shadow-2xl">
+      <div class="text-5xl">⏰ 🛑</div>
+      <h3 class="text-2xl font-black text-rose-400">HẾT GIỜ 45 PHÚT!</h3>
+      <p class="text-sm text-slate-300">Thời gian làm bài sát hạch đã kết thúc. Hệ thống đã tự động thu bài và chấm điểm cho bạn!</p>
+      <button onclick="closeTimeOutModal()" class="w-full py-2.5 rounded-xl bg-rose-600 hover:bg-rose-500 text-white font-bold text-sm transition">
+        Xem điểm số và lời giải chi tiết
+      </button>
+    </div>
+  </div>
+
+  <script>
+    const examData = [
+      // PHẦN 1: QUANG HỌC & 5 LOẠI ĐÈN (1-10)
+      {
+        id: 1,
+        cat: "QUANG HỌC & ÁNH SÁNG",
+        q: "Khi cần đo đường kính ngoài và bước ren ốc vít với độ chính xác cao nhất (bóng đen kịt trên nền trắng sáng chói), loại đèn nào là lựa chọn tối ưu?",
+        options: [
+          "Đèn vòng xiên góc thấp (Low-Angle Ring)",
+          "Đèn chiếu đáy từ dưới lên (Backlight)",
+          "Đèn vòm bát úp (Dome Light)",
+          "Đèn đồng trục (Coaxial Light)"
+        ],
+        ans: 1,
+        exp: "Đèn Backlight đặt dưới đáy chiếu thẳng vào thấu kính, tạo độ tương phản cực đại (vật thể chắn sáng thành bóng đen, nền xung quanh trắng sáng) giúp thuật toán viền biên đo đạc kích thước chuẩn xác từng micromet."
+      },
+      {
+        id: 2,
+        cat: "QUANG HỌC & ÁNH SÁNG",
+        q: "Nguyên lý chiếu sáng trường tối (Darkfield Lighting) bằng đèn Low-Angle Ring 15° hoạt động như thế nào?",
+        options: [
+          "Tất cả ánh sáng đi thẳng vào camera làm ảnh sáng rực",
+          "Mặt phẳng nhẵn phản xạ ánh sáng ra xa (nền đen), chỉ có mép vết xước gồ ghề mới tán xạ ánh sáng ngược lên camera (vết xước sáng rực)",
+          "Tắt hết đèn để phòng tối hoàn toàn",
+          "Dùng kính lọc màu đỏ để khử bóng mờ"
+        ],
+        ans: 1,
+        exp: "Chiếu xiên 15 độ khiến tia sáng phản xạ theo góc phản xạ bay ra ngoài thấu kính (nền tối đen). Khi gặp vết xước hay bụi lồi lõm, tia sáng bị tán xạ ngược thẳng đứng lên camera, làm vết xước phát sáng rõ rệt."
+      },
+      {
+        id: 3,
+        cat: "QUANG HỌC & ÁNH SÁNG",
+        q: "Đèn đồng trục (Coaxial Light) sử dụng linh kiện quang học nào bên trong để đưa tia sáng đi cùng trục vuông góc với camera?",
+        options: [
+          "Thấu kính hội tụ lồi",
+          "Tấm kính bán mạ nghiêng 45 độ (Beam Splitter)",
+          "Gương cầu lõm",
+          "Màng lọc phân cực xoay tròn"
+        ],
+        ans: 1,
+        exp: "Beam Splitter nghiêng 45 độ phản xạ 50% ánh sáng từ đèn LED chiếu vuông góc 90 độ xuống mặt phẳng sản phẩm và cho phép 50% ánh sáng phản xạ đi xuyên thẳng lên cảm biến camera, triệt tiêu hoàn toàn đốm lóa gương."
+      },
+      {
+        id: 4,
+        cat: "QUANG HỌC & ÁNH SÁNG",
+        q: "Khi kiểm tra bề mặt cong bóng loáng như vỏ lon nước ngọt, nắp kim loại vồng, hoặc viên bi thép, loại đèn nào giúp loại bỏ điểm mù phản chiếu?",
+        options: [
+          "Đèn thanh Bar Light một hướng",
+          "Đèn Backlight",
+          "Đèn vòm bát úp (Dome Light)",
+          "Đèn Spotlight hội tụ"
+        ],
+        ans: 2,
+        exp: "Đèn Dome phản xạ ánh sáng từ đáy lên thành vòm cong màu trắng sữa, tạo ra ánh sáng khuếch tán đa hướng 360 độ bao bọc lấy vật thể cong, không để lại bất kỳ đốm lóa hay bóng tối nào."
+      },
+      {
+        id: 5,
+        cat: "QUANG HỌC & ÁNH SÁNG",
+        q: "Loại đèn 'Trùm cuối' kết hợp cả Coaxial và Dome thường được dùng trong bài toán nào?",
+        options: [
+          "Chỉ dùng cho vải dệt",
+          "Bề mặt kim loại phức tạp vừa có mặt phẳng gương vừa có cạnh vát nghiêng (vỏ iPhone, linh kiện cơ khí chính xác)",
+          "Kiểm tra chất lỏng trong chai thủy tinh",
+          "Đọc mã vạch trên thùng carton giấy"
+        ],
+        ans: 1,
+        exp: "Đèn Hybrid Coaxial + Dome kết hợp ánh sáng đồng trục soi mặt phẳng gương và ánh sáng vòm tán xạ soi các cạnh bo cong, triệt tiêu 100% điểm mù."
+      },
+      {
+        id: 6,
+        cat: "QUANG HỌC & ÁNH SÁNG",
+        q: "Thông số Exposure Time (Thời gian phơi sáng) của camera công nghiệp có ý nghĩa gì?",
+        options: [
+          "Thời gian bật máy tính",
+          "Thời gian cảm biến mở màn trập để đón hạt photon ánh sáng",
+          "Thời gian bảo hành của camera",
+          "Thời gian truyền ảnh qua cáp mạng"
+        ],
+        ans: 1,
+        exp: "Exposure time càng dài ảnh càng sáng nhưng dễ bị nhòe chuyển động (Motion Blur). Trong nhà máy, exposure time thường đặt cực ngắn (500 - 2000µs)."
+      },
+      {
+        id: 7,
+        cat: "QUANG HỌC & ÁNH SÁNG",
+        q: "Khi sản phẩm di chuyển trên băng chuyền với tốc độ cao, hiện tượng 'Nhòe chuyển động' (Motion Blur) được khắc phục bằng cách nào?",
+        options: [
+          "Tăng Exposure time lên 1 giây",
+          "Giảm Exposure time xuống dưới 1000µs và dùng đèn Strobe (chớp công suất cao)",
+          "Tắt bớt đèn",
+          "Dùng ống kính góc rộng"
+        ],
+        ans: 1,
+        exp: "Giảm thời gian phơi sáng xuống mức cực ngắn (đóng băng chuyển động) kết hợp chớp đèn công suất lớn (Strobe light) để ảnh vừa nét vừa đủ sáng."
+      },
+      {
+        id: 8,
+        cat: "QUANG HỌC & ÁNH SÁNG",
+        q: "Hệ số chuẩn hóa Calibration Factor (mm/pixel) được tính bằng cách nào?",
+        options: [
+          "Lấy kích thước thực tế (mm) chia cho số pixel đo được trên ảnh",
+          "Lấy số pixel nhân với 1000",
+          "Lấy độ phân giải camera chia cho 24",
+          "Lấy chiều dài cáp mạng chia cho tốc độ máy"
+        ],
+        ans: 0,
+        exp: "Ví dụ một thước chuẩn dài 10mm chiếm 100 pixel trên ảnh -> Calibration Factor = 10 / 100 = 0.10 mm/pixel."
+      },
+      {
+        id: 9,
+        cat: "QUANG HỌC & ÁNH SÁNG",
+        q: "Hiện tượng 'Tăng Gain' quá cao trên camera công nghiệp sẽ gây ra tác dụng phụ gì?",
+        options: [
+          "Ảnh bị mờ",
+          "Khuếch đại hạt nhiễu (Noise) làm ảnh bị lấm chấm mè li ti",
+          "Làm cháy bóng đèn LED",
+          "Làm đơ giao diện WPF"
+        ],
+        ans: 1,
+        exp: "Gain là mạch khuếch đại điện tử. Tăng Gain giúp ảnh sáng hơn nhưng đồng thời khuếch đại cả tín hiệu nhiễu."
+      },
+      {
+        id: 10,
+        cat: "QUANG HỌC & ÁNH SÁNG",
+        q: "Working Distance (WD - Khoảng cách làm việc) là khoảng cách đo từ đâu đến đâu?",
+        options: [
+          "Từ máy tính đến tủ điện PLC",
+          "Từ mép ngoài thấu kính (Lens) đến bề mặt sản phẩm cần kiểm tra",
+          "Từ bóng đèn đến ổ cắm điện",
+          "Từ cảm biến quang đến băng chuyền"
+        ],
+        ans: 1,
+        exp: "WD là khoảng cách vật lý từ đầu ống kính camera đến vật thể cần chụp."
+      },
+
+      // PHẦN 2: THUẬT TOÁN VISION 4G & OPENCV (11-20)
+      {
+        id: 11,
+        cat: "THUẬT TOÁN VISION 4G",
+        q: "Quy tắc '4 chữ G' kinh điển trong thị giác máy công nghiệp gồm 4 bước nào?",
+        options: [
+          "Gather, Group, Generate, Grade",
+          "Guidance (Định vị), Identification (Nhận diện mã), Gauging (Đo đạc), Inspection (Soi lỗi)",
+          "Graph, Grid, Gain, Gate",
+          "Glass, Gray, Gaussian, Ground"
+        ],
+        ans: 1,
+        exp: "4 chữ G bao trùm 100% bài toán nhà máy thế giới: Guidance (tìm tọa độ/góc), ID (đọc QR/Barcode/OCR), Gauging (đo kích thước/dung sai), Inspection (bắt xước/mẻ/dị vật)."
+      },
+      {
+        id: 12,
+        cat: "THUẬT TOÁN VISION 4G",
+        q: "Hàm cv2.GaussianBlur hoặc Cv2.GaussianBlur đóng vai trò gì trong pipeline xử lý ảnh?",
+        options: [
+          "Đọc mã QR",
+          "Khử nhiễu, làm mịn ảnh trước khi phân ngưỡng nhị phân",
+          "Lưu ảnh vào ổ cứng",
+          "Gửi tín hiệu sang PLC"
+        ],
+        ans: 1,
+        exp: "Làm mịn ảnh bằng bộ lọc Gaussian giúp loại bỏ các hạt nhiễu lấm chấm trước khi tách nền."
+      },
+      {
+        id: 13,
+        cat: "THUẬT TOÁN VISION 4G",
+        q: "Thuật toán Thresholding (Phân ngưỡng nhị phân) biến bức ảnh xám (Grayscale 0-255) thành dạng ảnh nào?",
+        options: [
+          "Ảnh màu RGB",
+          "Ảnh Đen - Trắng nhị phân (Binary: chỉ gồm 0 và 255)",
+          "Ảnh 3D",
+          "Ảnh GIF chuyển động"
+        ],
+        ans: 1,
+        exp: "Thresholding so sánh từng pixel với một ngưỡng: lớn hơn ngưỡng thành Trắng (255), nhỏ hơn thành Đen (0)."
+      },
+      {
+        id: 14,
+        cat: "THUẬT TOÁN VISION 4G",
+        q: "Hàm cv2.minAreaRect(contour) trả về thông tin gì của vật thể?",
+        options: [
+          "Mã số serial của con chip",
+          "Hình chữ nhật xoay có diện tích nhỏ nhất bao quanh vật thể (Tâm X, Y, Kích thước W, H và Góc xoay θ)",
+          "Dung lượng bộ nhớ RAM",
+          "Địa chỉ IP của camera"
+        ],
+        ans: 1,
+        exp: "MinAreaRect trả về tâm (Center), kích thước (Size) và góc nghiêng (Angle) để phục vụ bước Guidance xoay thẳng ảnh."
+      },
+      {
+        id: 15,
+        cat: "THUẬT TOÁN VISION 4G",
+        q: "Hàm cv2.getRotationMatrix2D kết hợp cv2.warpAffine được dùng để làm gì trong bước Guidance?",
+        options: [
+          "Xoay thẳng bức ảnh bị nghiêng góc θ về góc 0 độ",
+          "Tăng độ sáng của ảnh",
+          "Đo chiều cao con chip",
+          "Xóa file ảnh cũ"
+        ],
+        ans: 0,
+        exp: "Tạo ma trận biến đổi afin và xoay toàn bộ bức ảnh về phương thẳng đứng 0 độ để các bước đo đạc phía sau đạt độ chính xác cao."
+      },
+      {
+        id: 16,
+        cat: "THUẬT TOÁN VISION 4G",
+        q: "Khái niệm ROI (Region of Interest) trong xử lý ảnh có nghĩa là gì?",
+        options: [
+          "Tỷ lệ hoàn vốn đầu tư",
+          "Vùng quan tâm / Khu vực cắt riêng trên ảnh để tập trung soi lỗi mà không bị ảnh hưởng bởi vùng khác",
+          "Tên một loại camera",
+          "Định dạng nén ảnh"
+        ],
+        ans: 1,
+        exp: "ROI là vùng không gian cụ thể (ví dụ: khoanh vùng 4 góc để soi mẻ, khoanh nửa dưới để soi xước)."
+      },
+      {
+        id: 17,
+        cat: "THUẬT TOÁN VISION 4G",
+        q: "Thuật toán Canny Edge Detector (cv2.Canny) chuyên dùng để làm gì?",
+        options: [
+          "Phát hiện đường biên và mép cạnh sắc nét (dùng để bắt vết xước, nứt nẻ)",
+          "Đọc văn bản tiếng Việt",
+          "Nén dung lượng ảnh",
+          "Đổi tên file ảnh"
+        ],
+        ans: 0,
+        exp: "Canny dò tìm gradient biến thiên độ sáng mạnh để vẽ ra các đường biên cạnh mảnh, cực kỳ hữu hiệu khi soi vết xước."
+      },
+      {
+        id: 18,
+        cat: "THUẬT TOÁN VISION 4G",
+        q: "Tại sao khi soi vết xước trên thân chip ta không quét toàn bộ thân mà phải trừ vùng chữ in laser 'A18 PRO BIONIC'?",
+        options: [
+          "Để tiết kiệm điện",
+          "Để tránh hiện tượng Báo lỗi giả (False Alarm / Overkill) do thuật toán nhầm nét chữ laser là vết xước",
+          "Vì camera không đọc được chữ",
+          "Vì chữ laser không bao giờ bị xước"
+        ],
+        ans: 1,
+        exp: "Nét chữ laser tạo ra các cạnh sắc nét, nếu không khoanh vùng ROI trừ ra thì thuật toán sẽ đếm nhầm thành vết xước kim loại."
+      },
+      {
+        id: 19,
+        cat: "THUẬT TOÁN VISION 4G",
+        q: "Trong C# OpenCvSharp, từ khóa 'using var mat = new Mat();' có tác dụng tối thượng gì?",
+        options: [
+          "Tăng tốc độ mạng internet",
+          "Tự động giải phóng bộ nhớ RAM (Dispose) ngay khi ra khỏi hàm, chống rò rỉ bộ nhớ (Memory Leak)",
+          "Vẽ khung màu xanh lên màn hình",
+          "Gửi email báo cáo cho sếp"
+        ],
+        ans: 1,
+        exp: "Mat trong OpenCvSharp bọc con trỏ C++ unmanaged. Dùng using đảm bảo RAM giải phóng lập tức, giúp phần mềm chạy 24/7 không bao giờ tràn RAM."
+      },
+      {
+        id: 20,
+        cat: "THUẬT TOÁN VISION 4G",
+        q: "Khi một con chip có kích thước 220px và dung sai ±15px, những kích thước nào sau đây được coi là ĐẠT (OK)?",
+        options: [
+          "195px và 245px",
+          "210px, 218px và 232px",
+          "180px",
+          "260px"
+        ],
+        ans: 1,
+        exp: "Dải kích thước hợp lệ: từ 220 - 15 = 205px đến 220 + 15 = 235px. Vậy 210px, 218px, 232px đều nằm trong dung sai cho phép."
+      },
+
+      // PHẦN 3: PHẦN CỨNG NHÀ MÁY, PLC & SOCKET (21-30)
+      {
+        id: 21,
+        cat: "PLC & GIAO TIẾP CÔNG NGHIỆP",
+        q: "PLC (Programmable Logic Controller) trong nhà máy đóng vai trò gì?",
+        options: [
+          "Lướt web và xem phim",
+          "Bộ điều khiển cơ bắp công nghiệp chống rung bụi, chuyên điều khiển băng chuyền, xi-lanh, robot và van khí nén",
+          "Màn hình cảm ứng",
+          "Máy in hóa đơn"
+        ],
+        ans: 1,
+        exp: "PLC là bộ điều khiển logic lập trình được, nồi đồng cối đá, làm việc bền bỉ 10 năm trong tủ điện xưởng máy."
+      },
+      {
+        id: 22,
+        cat: "PLC & GIAO TIẾP CÔNG NGHIỆP",
+        q: "Tín hiệu Trigger gửi từ cảm biến đến camera có ý nghĩa gì?",
+        options: [
+          "Lệnh khởi động lại máy tính",
+          "Sự kiện (Event / Cú bóp cò) báo cho camera biết sản phẩm đã vào vị trí để chụp ảnh ngay lập tức",
+          "Lệnh tắt nguồn băng chuyền",
+          "Lệnh xóa bộ nhớ camera"
+        ],
+        ans: 1,
+        exp: "Trigger là tín hiệu kích hoạt chụp ảnh khi mắt thần phát hiện vật thể đến đúng tâm ống kính."
+      },
+      {
+        id: 23,
+        cat: "PLC & GIAO TIẾP CÔNG NGHIỆP",
+        q: "Giao thức truyền thông phổ biến nhất để máy tính PC kết nối với PLC qua mạng LAN là gì?",
+        options: [
+          "Bluetooth",
+          "Socket TCP/IP hoặc Modbus TCP",
+          "Hồng ngoại",
+          "Sóng radio FM"
+        ],
+        ans: 1,
+        exp: "Socket TCP/IP (hoặc Modbus TCP qua Port 502) là chuẩn kết nối dây mạng LAN Ethernet thông dụng nhất giữa IPC và PLC."
+      },
+      {
+        id: 24,
+        cat: "PLC & GIAO TIẾP CÔNG NGHIỆP",
+        q: "Quy trình Handshake (Bắt tay) giữa PC và PLC nhằm mục đích gì?",
+        options: [
+          "Để hai thiết bị trao đổi dữ liệu an toàn và xác nhận đã nhận lệnh, không bị mất mát tín hiệu",
+          "Để sạc pin cho PLC",
+          "Để đo nhiệt độ phòng sạch",
+          "Để cài đặt hệ điều hành Windows"
+        ],
+        ans: 0,
+        exp: "Handshake đảm bảo: PLC gửi Trigger -> PC xác nhận đã nhận -> PC xử lý xong trả kết quả -> PLC xác nhận đã kích hoạt xi-lanh gạt hàng."
+      },
+      {
+        id: 25,
+        cat: "PLC & GIAO TIẾP CÔNG NGHIỆP",
+        q: "Dòng chữ '[BẬT BIT Y1=1]' trên PLC tương ứng với hiện tượng vật lý nào ngoài đời?",
+        options: [
+          "Màn hình máy tính bị tắt",
+          "PLC cấp điện 24V đóng rơ-le mở van khí nén để đẩy xi-lanh gạt hàng lỗi vào thùng phế phẩm",
+          "Camera chụp thêm 10 bức ảnh",
+          "Băng chuyền chạy lùi lại"
+        ],
+        ans: 1,
+        exp: "Bit Y1 là ngõ ra rơ-le vật lý trên PLC, khi bật lên 1 sẽ cấp nguồn 24V đóng van solenoid đẩy khí nén gạt phế phẩm."
+      },
+      {
+        id: 26,
+        cat: "PLC & GIAO TIẾP CÔNG NGHIỆP",
+        q: "Khi PLC và Vision PC bị mất kết nối mạng đột ngột, giải pháp lập trình chuẩn công nghiệp là gì?",
+        options: [
+          "Cho phần mềm crash văng màn hình",
+          "Bắt ngoại lệ (Try-Catch) và có vòng lặp tự động kết nối lại (Auto-Reconnect) định kỳ mỗi 2 giây",
+          "Tắt máy tính đi về",
+          "Xóa toàn bộ code"
+        ],
+        ans: 1,
+        exp: "Phần mềm công nghiệp bắt buộc phải có cơ chế Auto-Reconnect tự phục hồi khi dây mạng bị lỏng hoặc PLC khởi động lại."
+      },
+      {
+        id: 27,
+        cat: "PLC & GIAO TIẾP CÔNG NGHIỆP",
+        q: "Chuẩn giao tiếp I/O gồm có 2 thành phần nào?",
+        options: [
+          "Input (Cổng nhận tín hiệu vào) và Output (Cổng phát lệnh điều khiển ra)",
+          "Internet và Offline",
+          "Inside và Outside",
+          "Intel và Optane"
+        ],
+        ans: 0,
+        exp: "Input: Nút bấm, cảm biến quang, công tắc hành trình. Output: Đèn báo xanh đỏ, còi hú, xi-lanh khí nén."
+      },
+      {
+        id: 28,
+        cat: "PLC & GIAO TIẾP CÔNG NGHIỆP",
+        q: "Thời gian truyền một gói tin Socket TCP ngắn (ví dụ: 'TRIGGER,ID=101') qua mạng LAN nội bộ mất khoảng bao lâu?",
+        options: [
+          "10 giây",
+          "Dưới 1 mili-giây (0.1 - 0.5 ms)",
+          "1 phút",
+          "100 mili-giây"
+        ],
+        ans: 1,
+        exp: "Mạng LAN Gigabit nội bộ truyền các gói tin text ngắn chỉ mất vài trăm micro-giây (< 0.5ms)."
+      },
+      {
+        id: 29,
+        cat: "PLC & GIAO TIẾP CÔNG NGHIỆP",
+        q: "Cổng mạng mặc định tiêu chuẩn của giao thức Modbus TCP là cổng số mấy?",
+        options: [
+          "Port 80",
+          "Port 502",
+          "Port 443",
+          "Port 3306"
+        ],
+        ans: 1,
+        exp: "Port 502 là cổng tiêu chuẩn quốc tế của Modbus TCP."
+      },
+      {
+        id: 30,
+        cat: "PLC & GIAO TIẾP CÔNG NGHIỆP",
+        q: "Tại sao camera công nghiệp thường dùng chuẩn giao tiếp GigE Vision (dây mạng LAN) hoặc USB3 Vision?",
+        options: [
+          "Vì dây cáp đẹp mắt",
+          "Vì tốc độ truyền băng thông cao (1Gbps - 5Gbps), truyền ảnh không nén và truyền xa tới 100 mét",
+          "Vì rẻ hơn dây sạc điện thoại",
+          "Vì không cần cắm điện"
+        ],
+        ans: 1,
+        exp: "GigE Vision truyền ảnh Raw chất lượng cao qua khoảng cách xa 100m bằng cáp Cat6 công nghiệp chống nhiễu."
+      },
+
+      // PHẦN 4: ĐA LUỒNG & C# .NET 8 WPF (31-40)
+      {
+        id: 31,
+        cat: "ĐA LUỒNG & C# WPF",
+        q: "Tại sao trong phần mềm PC Control bắt buộc phải tách biệt UI Thread và Worker Thread?",
+        options: [
+          "Để tiết kiệm dung lượng ổ cứng",
+          "Để màn hình giao diện không bao giờ bị đơ/lag khi thuật toán tính toán nặng và băng chuyền chạy tốc độ cao",
+          "Vì Windows cấm gộp luồng",
+          "Để camera chụp nét hơn"
+        ],
+        ans: 1,
+        exp: "UI Thread chỉ làm nhiệm vụ vẽ giao diện. Mọi tính toán nặng (OpenCV, Socket) đẩy cho Worker Thread ngầm xử lý."
+      },
+      {
+        id: 32,
+        cat: "ĐA LUỒNG & C# WPF",
+        q: "Hàng đợi Thread-Safe Queue (hoặc BlockingCollection trong C#) đóng vai trò gì giữa luồng mạng và luồng xử lý ảnh?",
+        options: [
+          "Lưu ảnh vĩnh viễn lên đám mây",
+          "Làm bộ đệm trung gian (Buffer / Khay kẹp order) giúp luồng mạng vứt việc vào nhanh không bị mất tín hiệu khi băng chuyền chạy dồn dập",
+          "Đổi màu giao diện sang Dark mode",
+          "Tắt bớt nhân CPU"
+        ],
+        ans: 1,
+        exp: "Queue áp dụng mô hình Producer-Consumer, ngăn cách việc nhận Trigger và việc tính toán ảnh, tránh nghẽn luồng."
+      },
+      {
+        id: 33,
+        cat: "ĐA LUỒNG & C# WPF",
+        q: "Kiến trúc MVVM (Model - View - ViewModel) trong C# WPF chia ứng dụng thành 3 thành phần nào?",
+        options: [
+          "Mouse, Video, Voice, Music",
+          "Model (Khai báo dữ liệu), View (Giao diện XAML), ViewModel (Bộ não điều phối & Data Binding)",
+          "Memory, Virus, Windows, Microsoft",
+          "Main, Vector, Void, Method"
+        ],
+        ans: 1,
+        exp: "MVVM là chuẩn mực kiến trúc số 1 của WPF giúp tách rời giao diện và logic xử lý."
+      },
+      {
+        id: 34,
+        cat: "ĐA LUỒNG & C# WPF",
+        q: "Ngôn ngữ thẻ XAML trong WPF có cấu trúc cú pháp tương đồng nhất với công nghệ nào trong Web?",
+        options: [
+          "HTML / XML",
+          "PHP",
+          "SQL Database",
+          "Python"
+        ],
+        ans: 0,
+        exp: "XAML là ngôn ngữ định nghĩa giao diện dựa trên XML với các thẻ lồng nhau và thuộc tính y hệt HTML/CSS."
+      },
+      {
+        id: 35,
+        cat: "ĐA LUỒNG & C# WPF",
+        q: "Giao thức WebSocket (Port 8765) trong hệ thống của chúng ta được dùng để làm gì?",
+        options: [
+          "Tải video YouTube",
+          "Bắn dữ liệu phán quyết thời gian thực hai chiều từ Python Backend lên Bảng điều khiển Web 3D Dashboard",
+          "Gửi email báo cáo",
+          "Nén file ZIP"
+        ],
+        ans: 1,
+        exp: "WebSocket tạo kênh kết nối liên tục song công (Full-duplex) để Python bắn tức thì từng kết quả kiểm tra lên giao diện 3D."
+      },
+      {
+        id: 36,
+        cat: "ĐA LUỒNG & C# WPF",
+        q: "Trong C# WPF, cơ chế 'Data Binding' giúp giải quyết vấn đề gì cho lập trình viên?",
+        options: [
+          "Tự động cập nhật dữ liệu từ biến C# lên màn hình XAML mà không cần viết code thủ công getElementById hay gán từng text",
+          "Tự động format ổ cứng",
+          "Chống virus máy tính",
+          "Tự động tắt nguồn máy khi hết ca"
+        ],
+        ans: 0,
+        exp: "Data Binding đồng bộ tự động giữa ViewModel và View: khi thuộc tính TotalCount thay đổi, TextBlock trên giao diện tự đổi số."
+      },
+      {
+        id: 37,
+        cat: "ĐA LUỒNG & C# WPF",
+        q: "Thư viện OpenCvSharp4 trong C# là gì?",
+        options: [
+          "Một game giải trí 3D",
+          "Bản wrapper C# hoàn chỉnh của thư viện thị giác máy tính OpenCV C++, tối ưu hóa hiệu năng cho môi trường .NET",
+          "Trình duyệt web",
+          "Phần mềm chỉnh sửa âm thanh"
+        ],
+        ans: 1,
+        exp: "OpenCvSharp đưa toàn bộ sức mạnh xử lý ảnh siêu tốc của OpenCV C++ vào môi trường lập trình C# .NET."
+      },
+      {
+        id: 38,
+        cat: "ĐA LUỒNG & C# WPF",
+        q: "Trong C#, từ khóa 'async' và 'await' được dùng để làm gì?",
+        options: [
+          "Lập trình bất đồng bộ (Asynchronous), giúp chạy các tác vụ tốn thời gian mà không khóa (freeze) luồng chính",
+          "Tăng tốc độ card đồ họa",
+          "Xóa file tạm trong thư mục Temp",
+          "Bật đèn bàn phím"
+        ],
+        ans: 0,
+        exp: "async/await giúp thực hiện gọi I/O, đọc file, gọi socket mà UI vẫn phản hồi mượt mà."
+      },
+      {
+        id: 39,
+        cat: "ĐA LUỒNG & C# WPF",
+        q: "File định dạng '.csproj' trong dự án C# .NET chứa thông tin gì?",
+        options: [
+          "File ảnh sản phẩm",
+          "File cấu hình dự án, khai báo phiên bản .NET 8 và danh sách các gói thư viện NuGet (OpenCvSharp, MVVM Toolkit)",
+          "File video quay màn hình",
+          "File mật khẩu của Windows"
+        ],
+        ans: 1,
+        exp: "File .csproj là bộ xương cấu hình dự án C#, quản lý dependencies và target framework."
+      },
+      {
+        id: 40,
+        cat: "ĐA LUỒNG & C# WPF",
+        q: "Tại sao C# .NET 8 lại được các tập đoàn FDI (Samsung, Foxconn, Cognex) ưa chuộng hơn Python trên máy tính công nghiệp IPC?",
+        options: [
+          "Vì C# do Microsoft tạo ra, tối ưu hóa sâu cho Windows IPC, hỗ trợ đa luồng phần cứng thật sự và có hệ sinh thái WPF hoàn hảo",
+          "Vì C# miễn phí còn Python phải trả tiền",
+          "Vì Python không chạy được trên Windows",
+          "Vì C# nhẹ hơn 100 lần"
+        ],
+        ans: 0,
+        exp: "C# chạy native trên CLR .NET, quản lý bộ nhớ mạnh mẽ, đa luồng không bị GIL và tích hợp hoàn hảo với hệ điều hành Windows IPC."
+      },
+
+      // PHẦN 5: KPI SẢN XUẤT, SỰ CỐ & PHỎNG VẤN (41-50)
+      {
+        id: 41,
+        cat: "KPI & THỰC CHIẾN NHÀ MÁY",
+        q: "Chỉ số Yield Rate (Tỷ lệ đạt) trong sản xuất được tính bằng công thức nào?",
+        options: [
+          "Yield Rate (%) = (Số lượng hàng OK / Tổng số sản phẩm kiểm tra) * 100",
+          "Yield Rate (%) = (Số lượng hàng NG / Số lượng hàng OK) * 100",
+          "Yield Rate (%) = Thời gian chạy máy / 24 giờ",
+          "Yield Rate (%) = Số lỗi * 10"
+        ],
+        ans: 0,
+        exp: "Ví dụ kiểm tra 1000 sản phẩm, có 980 sản phẩm OK -> Yield Rate = (980 / 1000) * 100 = 98.0%."
+      },
+      {
+        id: 42,
+        cat: "KPI & THỰC CHIẾN NHÀ MÁY",
+        q: "Cycle Time (Thời gian chu kỳ) của trạm Vision là gì?",
+        options: [
+          "Thời gian công nhân nghỉ ăn trưa",
+          "Tổng thời gian từ khi nhận Trigger, xử lý ảnh xong, đến khi bắn kết quả phản hồi cho PLC cho 1 sản phẩm",
+          "Thời gian từ sáng đến tối",
+          "Thời gian camera khởi động"
+        ],
+        ans: 1,
+        exp: "Cycle Time là thời gian xử lý trọn vẹn 1 sản phẩm (ví dụ: 10ms)."
+      },
+      {
+        id: 43,
+        cat: "KPI & THỰC CHIẾN NHÀ MÁY",
+        q: "Nếu Cycle Time của phần mềm là 10ms, thì về mặt lý thuyết hệ thống có thể kiểm tra tối đa bao nhiêu sản phẩm trong 1 giây?",
+        options: [
+          "10 sản phẩm/giây",
+          "100 sản phẩm/giây (1000ms / 10ms = 100)",
+          "1 sản phẩm/giây",
+          "1000 sản phẩm/giây"
+        ],
+        ans: 1,
+        exp: "1 giây = 1000ms. Lấy 1000ms chia cho 10ms = 100 sản phẩm / giây."
+      },
+      {
+        id: 44,
+        cat: "KPI & THỰC CHIẾN NHÀ MÁY",
+        q: "Hiện tượng 'Underkill / Escape Defect' (Bỏ lọt lỗi) nguy hiểm như thế nào?",
+        options: [
+          "Làm tốn điện nhà máy",
+          "Sản phẩm bị nứt/xước nhưng máy phán quyết là OK -> Bay sang thị trường người dùng -> Bị khách hàng (Apple, Samsung) phạt triệu USD và thu hồi",
+          "Làm hỏng thấu kính camera",
+          "Làm mất file code"
+        ],
+        ans: 1,
+        exp: "Underkill là ác mộng chất lượng lớn nhất của nhà máy vì để lọt hàng phế phẩm đến tay người tiêu dùng."
+      },
+      {
+        id: 45,
+        cat: "KPI & THỰC CHIẾN NHÀ MÁY",
+        q: "Hiện tượng 'Overkill / False Alarm' (Báo lỗi giả) là gì?",
+        options: [
+          "Sản phẩm chuẩn đạt chất lượng nhưng bị máy báo nhầm thành NG và gạt vào sọt rác (làm sụt giảm Yield Rate và lãng phí)",
+          "Máy tính bị nhiễm virus",
+          "Băng chuyền chạy quá nhanh",
+          "Bóng đèn bị cháy"
+        ],
+        ans: 0,
+        exp: "Overkill là phán quyết sai hàng tốt thành hàng hỏng, làm tăng chi phí phế phẩm vô ích."
+      },
+      {
+        id: 46,
+        cat: "KPI & THỰC CHIẾN NHÀ MÁY",
+        q: "Bước Data Logging ghi nhật ký sản xuất ra file CSV hoặc Database phục vụ mục đích gì lớn nhất?",
+        options: [
+          "Để cho đẹp mắt",
+          "Truy xuất nguồn gốc (Traceability): Lưu lại lý lịch của từng con chip (giờ chụp, serial, kích thước, lỗi) để kiểm tra chất lượng",
+          "Để làm đầy ổ cứng",
+          "Để gửi tin nhắn SMS"
+        ],
+        ans: 1,
+        exp: "Traceability cho phép nhà máy truy cứu nguồn gốc chính xác của bất kỳ sản phẩm nào trong suốt vòng đời."
+      },
+      {
+        id: 47,
+        cat: "KPI & THỰC CHIẾN NHÀ MÁY",
+        q: "Tại sao trên nút 'Reset Ca Sản Xuất' trên bảng điều khiển lại cần có Hộp thoại cảnh báo xác nhận (Confirm Modal)?",
+        options: [
+          "Để công nhân không bị bấm nhầm làm xóa sạch dữ liệu sản xuất của cả ngày làm việc",
+          "Để tắt máy tính",
+          "Để đổi màu giao diện",
+          "Để chuyển sang tiếng Anh"
+        ],
+        ans: 0,
+        exp: "Phòng ngừa công nhân quẹt tay trúng nút Reset làm mất dữ liệu thống kê của ca trước khi kịp backup."
+      },
+      {
+        id: 48,
+        cat: "KPI & THỰC CHIẾN NHÀ MÁY",
+        q: "Vị trí FAE (Field Application Engineer) tại các hãng lớn như Cognex, Basler, Keyence đòi hỏi sự kết hợp của những kỹ năng nào?",
+        options: [
+          "Chỉ cần biết sửa xe máy",
+          "Kiến thức kỹ thuật sâu (Quang học, Vision, PLC) + Kỹ năng giao tiếp, thuyết trình giải pháp & Viết tài liệu (Doc Support)",
+          "Chỉ cần biết tiếng Anh không cần biết kỹ thuật",
+          "Chỉ cần ngồi văn phòng gõ word"
+        ],
+        ans: 1,
+        exp: "FAE là kỹ sư ứng dụng đóng vai trò chuyên gia tư vấn giải pháp, đòi hỏi giao thoa giữa Kỹ thuật + Giao tiếp đỉnh cao."
+      },
+      {
+        id: 49,
+        cat: "KPI & THỰC CHIẾN NHÀ MÁY",
+        q: "Khi đi phỏng vấn tại các tập đoàn FDI, câu trả lời nào thể hiện tư duy kiến trúc của một Kỹ sư PC Control thực thụ?",
+        options: [
+          "'Em dùng hàm cv2.imread để đọc ảnh'",
+          "'Em thiết kế hệ thống theo mô hình Đa luồng 4 tầng tách biệt (Acquisition, Worker Pool, PLC Comm, UI Present), đảm bảo UI không đơ giật và Cycle Time đạt dưới 10ms'",
+          "'Em không biết PLC hoạt động ra sao'",
+          "'Em chỉ làm theo hướng dẫn trên mạng'"
+        ],
+        ans: 1,
+        exp: "Giải thích bằng mô hình 4 tầng đa luồng và tối ưu Cycle Time chứng minh bạn là kỹ sư hệ thống thực chiến."
+      },
+      {
+        id: 50,
+        cat: "KPI & THỰC CHIẾN NHÀ MÁY",
+        q: "Mục tiêu tối thượng của Chiến Dịch Sportage là gì?",
+        options: [
+          "Chỉ học cho biết rồi để đó",
+          "Làm chủ toàn diện công nghệ Machine Vision & PC Control, nâng mức thu nhập lên 25-40tr+ và tự tay sở hữu chiếc xe Kia Sportage!",
+          "Làm nhân viên hỗ trợ văn phòng lương 8 triệu",
+          "Chờ đợi may mắn đến"
+        ],
+        ans: 1,
+        exp: "Mục tiêu tối thượng: Bứt phá thu nhập, làm chủ công nghệ đỉnh cao và sở hữu chiếc Kia Sportage bằng chính chuyên môn kỹ thuật!"
+      }
+    ];
+
+    let userSelections = new Array(50).fill(null);
+    let isSubmitted = false;
+    let totalSeconds = 45 * 60; // 45 phút = 2700s
+    let timerInterval = null;
+    let isTimerRunning = false;
+
+    function renderNavMap() {
+      const mapContainer = document.getElementById('navMap');
+      mapContainer.innerHTML = '';
+      examData.forEach((_, idx) => {
+        const btn = document.createElement('button');
+        btn.id = `nav-btn-${idx}`;
+        btn.onclick = () => scrollToQuestion(idx);
+        btn.innerText = idx + 1;
+        btn.className = "p-1 rounded text-center font-mono text-[11px] font-bold bg-slate-900 border border-slate-800 text-slate-400 hover:border-sky-500 transition";
+        mapContainer.appendChild(btn);
+      });
+    }
+
+    function scrollToQuestion(idx) {
+      const el = document.getElementById(`q-card-${idx}`);
+      if (el) {
+        el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      }
+    }
+
+    function renderQuestions() {
+      const container = document.getElementById('questionsContainer');
+      container.innerHTML = '';
+
+      examData.forEach((item, index) => {
+        const card = document.createElement('div');
+        card.id = `q-card-${index}`;
+        card.className = "glass-panel border border-slate-800 rounded-2xl p-4 sm:p-5 space-y-3 transition";
+
+        const header = `
+          <div class="flex items-center justify-between border-b border-slate-800 pb-2">
+            <span class="text-xs font-mono font-bold text-sky-400">CÂU ${index + 1}/50 • [${item.cat}]</span>
+            <span id="q-status-${index}" class="text-[11px] font-mono text-slate-500 font-bold">CHƯA CHỌN</span>
+          </div>
+          <h3 class="text-sm sm:text-base font-bold text-slate-100 leading-snug">${item.q}</h3>
+        `;
+
+        let optionsHtml = '<div class="space-y-2 pt-1">';
+        item.options.forEach((opt, optIdx) => {
+          const optLetter = String.fromCharCode(65 + optIdx);
+          optionsHtml += `
+            <button onclick="selectOption(${index}, ${optIdx})" id="btn-opt-${index}-${optIdx}" 
+              class="w-full text-left p-3 rounded-xl border border-slate-800 bg-slate-900/60 hover:border-sky-500/50 hover:bg-slate-800/80 text-xs sm:text-sm text-slate-300 transition flex items-start gap-2.5">
+              <span id="badge-opt-${index}-${optIdx}" class="font-mono font-bold text-sky-400 px-2 py-0.5 rounded bg-slate-950 border border-slate-800 text-xs">${optLetter}</span>
+              <span class="flex-1">${opt}</span>
+            </button>
+          `;
+        });
+        optionsHtml += '</div>';
+
+        const expHtml = `
+          <div id="exp-box-${index}" class="p-3.5 rounded-xl bg-slate-950/90 border border-slate-800 text-xs text-slate-300 hidden">
+            <span class="text-amber-400 font-bold block mb-1">💡 GIẢI THÍCH BẢN CHẤT KỸ THUẬT:</span>
+            <span>${item.exp}</span>
+          </div>
+        `;
+
+        card.innerHTML = header + optionsHtml + expHtml;
+        container.appendChild(card);
+      });
+    }
+
+    // 1. KHI ĐANG LÀM BÀI: CHỈ LƯU LỰA CHỌN, CHƯA HIỆN ĐÁP ÁN
+    function selectOption(qIdx, optIdx) {
+      if (isSubmitted) return; // Đã nộp bài thì khóa
+
+      if (!isTimerRunning && totalSeconds > 0) {
+        startTimer();
+      }
+
+      userSelections[qIdx] = optIdx;
+      const q = examData[qIdx];
+
+      // Cập nhật giao diện nút đã chọn (Highlight xanh dương)
+      for (let i = 0; i < q.options.length; i++) {
+        const btn = document.getElementById(`btn-opt-${qIdx}-${i}`);
+        const badge = document.getElementById(`badge-opt-${qIdx}-${i}`);
+        if (i === optIdx) {
+          btn.className = "w-full text-left p-3 rounded-xl border-2 border-sky-500 bg-sky-950/60 text-xs sm:text-sm text-sky-100 font-medium transition flex items-start gap-2.5 shadow-lg shadow-sky-500/20";
+          badge.className = "font-mono font-bold text-white px-2 py-0.5 rounded bg-sky-600 border border-sky-400 text-xs";
+        } else {
+          btn.className = "w-full text-left p-3 rounded-xl border border-slate-800 bg-slate-900/60 hover:border-sky-500/50 hover:bg-slate-800/80 text-xs sm:text-sm text-slate-300 transition flex items-start gap-2.5";
+          badge.className = "font-mono font-bold text-sky-400 px-2 py-0.5 rounded bg-slate-950 border border-slate-800 text-xs";
+        }
+      }
+
+      // Status badge & Nav Map Button
+      const statusBadge = document.getElementById(`q-status-${qIdx}`);
+      const navBtn = document.getElementById(`nav-btn-${qIdx}`);
+      statusBadge.className = "text-[11px] font-mono font-bold text-sky-400";
+      statusBadge.innerText = "✓ ĐÃ CHỌN";
+      navBtn.className = "p-1 rounded text-center font-mono text-[11px] font-bold bg-sky-600 text-white shadow-sm shadow-sky-600/40";
+
+      // Cập nhật số câu đã làm
+      const answered = userSelections.filter(x => x !== null).length;
+      document.getElementById('answeredCount').innerText = answered;
+    }
+
+    // 2. XÁC NHẬN NỘP BÀI
+    function confirmSubmit() {
+      if (isSubmitted) return;
+
+      const answered = userSelections.filter(x => x !== null).length;
+      const remaining = 50 - answered;
+
+      if (remaining > 0) {
+        const ok = confirm(`Bạn còn ${remaining} câu chưa trả lời. Bạn có chắc chắn muốn nộp bài thi ngay bây giờ không?`);
+        if (!ok) return;
+      } else {
+        const ok = confirm("Bạn đã hoàn thành 50/50 câu! Bạn có chắc chắn muốn nộp bài để xem điểm số và đáp án chi tiết?");
+        if (!ok) return;
+      }
+
+      submitExam();
+    }
+
+    // 3. XỬ LÝ CHẤM ĐIỂM VÀ MỞ TOÀN BỘ ĐÁP ÁN + GIẢI THÍCH
+    function submitExam() {
+      isSubmitted = true;
+      stopTimer();
+
+      let correct = 0;
+      let wrong = 0;
+
+      examData.forEach((q, idx) => {
+        const userChoice = userSelections[idx];
+        const isCorrect = (userChoice === q.ans);
+
+        if (isCorrect) correct++;
+        else wrong++;
+
+        // Tô màu Xanh lá cho đáp án đúng, Đỏ cho đáp án người dùng chọn sai
+        for (let i = 0; i < q.options.length; i++) {
+          const btn = document.getElementById(`btn-opt-${idx}-${i}`);
+          const badge = document.getElementById(`badge-opt-${idx}-${i}`);
+
+          if (i === q.ans) {
+            btn.className = "w-full text-left p-3 rounded-xl border-2 border-emerald-500 bg-emerald-950/70 text-xs sm:text-sm text-emerald-100 font-semibold transition flex items-start gap-2.5 shadow-lg shadow-emerald-500/25";
+            badge.className = "font-mono font-bold text-white px-2 py-0.5 rounded bg-emerald-600 border border-emerald-400 text-xs";
+          } else if (i === userChoice && !isCorrect) {
+            btn.className = "w-full text-left p-3 rounded-xl border-2 border-rose-500 bg-rose-950/70 text-xs sm:text-sm text-rose-100 font-medium transition flex items-start gap-2.5 shadow-lg shadow-rose-500/25";
+            badge.className = "font-mono font-bold text-white px-2 py-0.5 rounded bg-rose-600 border border-rose-400 text-xs";
+          } else {
+            btn.className = "w-full text-left p-3 rounded-xl border border-slate-900 bg-slate-950/40 text-xs sm:text-sm text-slate-600 opacity-40 flex items-start gap-2.5";
+          }
+        }
+
+        // Cập nhật thẻ trạng thái câu hỏi
+        const statusBadge = document.getElementById(`q-status-${idx}`);
+        const navBtn = document.getElementById(`nav-btn-${idx}`);
+
+        if (isCorrect) {
+          statusBadge.className = "text-[11px] font-mono font-bold text-emerald-400";
+          statusBadge.innerText = "✓ ĐÚNG";
+          navBtn.className = "p-1 rounded text-center font-mono text-[11px] font-bold bg-emerald-600 text-white shadow-sm shadow-emerald-600/40";
+        } else {
+          statusBadge.className = "text-[11px] font-mono font-bold text-rose-400";
+          statusBadge.innerText = (userChoice === null) ? "✗ BỎ TRỐNG" : "✗ SAI";
+          navBtn.className = "p-1 rounded text-center font-mono text-[11px] font-bold bg-rose-600 text-white shadow-sm shadow-rose-600/40";
+        }
+
+        // Mở hộp giải thích bản chất cho mọi câu
+        document.getElementById(`exp-box-${idx}`).classList.remove('hidden');
+      });
+
+      // Cập nhật Bản đồ Chú thích (Legend)
+      document.getElementById('mapLegend').innerHTML = `
+        <span class="flex items-center gap-1"><span class="w-2.5 h-2.5 rounded bg-emerald-600"></span> Đúng</span>
+        <span class="flex items-center gap-1"><span class="w-2.5 h-2.5 rounded bg-rose-600"></span> Sai / Bỏ trống</span>
+      `;
+
+      // Cập nhật Bảng điểm tổng kết
+      const percent = ((correct / 50) * 100).toFixed(1);
+      document.getElementById('resPercent').innerText = `${percent}%`;
+      document.getElementById('resCorrect').innerText = `${correct}/50`;
+      document.getElementById('resWrong').innerText = `${wrong}/50`;
+
+      let rankText = "XUẤT SẮC 🏆";
+      let rankColor = "text-emerald-400";
+      if (correct < 35) { rankText = "CẦN ÔN LẠI ⚠️"; rankColor = "text-rose-400"; }
+      else if (correct < 42) { rankText = "KHÁ 🥈"; rankColor = "text-amber-400"; }
+      else if (correct < 47) { rankText = "GIỎI 🥇"; rankColor = "text-sky-400"; }
+
+      const rankEl = document.getElementById('resRank');
+      rankEl.innerText = rankText;
+      rankEl.className = `text-2xl font-black ${rankColor}`;
+
+      document.getElementById('certSummary').innerHTML = `
+        Bạn đã hoàn thành bài thi với kết quả: 
+        <strong class="text-emerald-400 font-bold">${correct}/50 câu Đúng (${percent}%)</strong>.<br>
+        Tất cả đáp án đúng và phần <strong>💡 Giải thích bản chất kỹ thuật</strong> của cả 50 câu đã được mở toàn bộ bên dưới!
+      `;
+
+      // Ẩn nút nộp bài, hiện bảng điểm
+      document.getElementById('btnSubmitTop').innerText = "✓ ĐÃ NỘP BÀI";
+      document.getElementById('btnSubmitTop').disabled = true;
+      document.getElementById('btnSubmitTop').className = "px-5 py-3 rounded-xl bg-slate-800 text-slate-400 font-bold text-sm cursor-not-allowed";
+      document.getElementById('bottomSubmitCard').classList.add('hidden');
+
+      const certBox = document.getElementById('certificateBox');
+      certBox.classList.remove('hidden');
+      certBox.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
+
+    // --- COUNTDOWN TIMER (45:00) ---
+    function formatTime(sec) {
+      const m = Math.floor(sec / 60).toString().padStart(2, '0');
+      const s = (sec % 60).toString().padStart(2, '0');
+      return `${m}:${s}`;
+    }
+
+    function startTimer() {
+      if (timerInterval) clearInterval(timerInterval);
+      isTimerRunning = true;
+      document.getElementById('btnTimerControl').innerText = "⏸ Tạm dừng";
+
+      timerInterval = setInterval(() => {
+        if (totalSeconds > 0) {
+          totalSeconds--;
+          document.getElementById('timerDisplay').innerText = formatTime(totalSeconds);
+
+          if (totalSeconds <= 300) {
+            document.getElementById('timerCard').classList.add('timer-warning');
+          }
+        } else {
+          stopTimer();
+          document.getElementById('timeOutModal').classList.remove('hidden');
+        }
+      }, 1000);
+    }
+
+    function stopTimer() {
+      if (timerInterval) clearInterval(timerInterval);
+      isTimerRunning = false;
+      document.getElementById('btnTimerControl').innerText = "▶ Tiếp tục";
+    }
+
+    function toggleTimer() {
+      if (isSubmitted) return;
+      if (isTimerRunning) {
+        stopTimer();
+      } else {
+        startTimer();
+      }
+    }
+
+    function closeTimeOutModal() {
+      document.getElementById('timeOutModal').classList.add('hidden');
+      submitExam();
+    }
+
+    function resetExam() {
+      stopTimer();
+      isSubmitted = false;
+      totalSeconds = 45 * 60;
+      document.getElementById('timerDisplay').innerText = "45:00";
+      document.getElementById('timerCard').classList.remove('timer-warning');
+
+      userSelections = new Array(50).fill(null);
+      document.getElementById('answeredCount').innerText = "0";
+
+      document.getElementById('btnSubmitTop').innerText = "🚀 NỘP BÀI";
+      document.getElementById('btnSubmitTop').disabled = false;
+      document.getElementById('btnSubmitTop').className = "px-5 py-3 rounded-xl bg-gradient-to-r from-emerald-600 to-sky-600 hover:from-emerald-500 hover:to-sky-500 text-white font-black text-sm uppercase tracking-wider shadow-lg shadow-emerald-600/30 transition transform active:scale-95";
+      document.getElementById('bottomSubmitCard').classList.remove('hidden');
+
+      document.getElementById('mapLegend').innerHTML = `
+        <span class="flex items-center gap-1"><span class="w-2.5 h-2.5 rounded bg-slate-900 border border-slate-700"></span> Chưa chọn</span>
+        <span class="flex items-center gap-1"><span class="w-2.5 h-2.5 rounded bg-sky-600"></span> Đã chọn</span>
+      `;
+
+      renderNavMap();
+      renderQuestions();
+      document.getElementById('certificateBox').classList.add('hidden');
+      document.getElementById('timeOutModal').classList.add('hidden');
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+      startTimer();
+    }
+
+    // Khởi tạo
+    renderNavMap();
+    renderQuestions();
+    startTimer();
+  </script>
+</body>
+</html>
