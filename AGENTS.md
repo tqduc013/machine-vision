@@ -122,5 +122,13 @@ Khi bất kỳ Agent nào (Antigravity, Hermes, v.v.) hỗ trợ User trong repo
       4. `Views/MainWindow.xaml`: Giao diện Dark Mode IPC công nghiệp bằng ngôn ngữ thẻ XAML cao cấp.
     - **Tốc độ biên dịch siêu tốc:** Build thành công $100\%$ không lỗi trong **$2.89\text{ giây}$**!
     - File chạy thực thi đã sẵn sàng: `src/PCControlApp/bin/Debug/net8.0-windows/PCControlApp.exe`.
-  - 🔄 **Kế hoạch tiếp theo (Milestone 8):** 
-    - Luyện tập kịch bản phỏng vấn kỹ thuật & Portfolio Showcase (Tổng duyệt Chiến dịch Sportage).
+  - ✅ **Hoàn thành Sát Hạch Toàn Diện Khóa 1 (50-Question Master Exam & GitHub Showcase):**
+    - Đã xây dựng phòng thi sát hạch 50 câu bấm giờ 45 phút chuẩn thực tế: `master_exam_50.html`.
+    - Đã chính thức đẩy (push) toàn bộ mã nguồn lên GitHub: `https://github.com/tqduc013/machine-vision`.
+    - Đồng bộ lộ trình Deep Learning 80/20 từ GitHub về repo: `docs/aoi_anomaly_detection_roadmap_vi.md`.
+    - Xây dựng công cụ trực quan so sánh Rule-based vs AI PatchCore: `anomaly_simulator.html`.
+  - 🧠 **Cột Mốc Tâm Lý Đột Phá (Breakthrough):**
+    - Phá tan bẫy thao túng tâm lý (Gaslighting) của công ty cũ: Nhận diện rõ chiêu trò "hỏi vặt toán/thuật toán chay" để dìm lương nhân viên dù họ đã cống hiến hết mình.
+    - Giải phóng vĩnh viễn nỗi sợ "thiếu kỹ năng giải quyết vấn đề", xác lập tư duy Kiến trúc sư Hệ thống (System Architect) chỉ huy máy tính làm toán thay vì tự ti vô nghĩa.
+  - 🔄 **Kế hoạch tiếp theo (Khóa 2 - Industrial Deep Learning & AI Anomaly Detection):** 
+    - Triển khai mô hình AI Anomaly Detection (PatchCore / Autoencoder) bắt lỗi xước nano và tích hợp ONNX Runtime vào C# WPF.
