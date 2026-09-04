@@ -7,18 +7,20 @@
 
 ## 🎯 1. BỐI CẢNH & NHÂN VẬT CHÍNH (THE USER STORY)
 
-- **Xuất thân & Hành trình:** 
-  - Tốt nghiệp chuyên ngành **Khoa học máy tính (Computer Science)**.
-  - Từng làm Web Dev trái tay nhưng cảm thấy "đuối code", phải nhờ AI hỗ trợ nhiều $\to$ Bị công ty luân chuyển sang làm đủ thứ việc linh tinh: Marketing, Call to Sale, Chat Support, viết tài liệu sản phẩm (Doc Support), thậm chí làm cả KOL đại diện cho công ty...
-  - **Thực trạng bị "bào":** Làm từ A-Z mọi việc không tên, bị bóc lột sức lao động với mức lương cơ bản bọt bèo (< 10 triệu/tháng). Môi trường toxic, sếp hay đặt điều, áp lực tâm lý. Hợp đồng chỉ còn dưới 1 năm.
+- **Xuất thân & Nhân vật chính:** 
+  - **Trần Quang Đức** — Kỹ sư Khoa học máy tính (Computer Science) Loại Giỏi, cựu sinh viên **Lớp Kỹ Sư Tài Năng (1012421TN)**.
+  - Tác giả đồ án tốt nghiệp Big Data: `DETECTING-FRAUD-IN-CREDIT-CARD-TRANSACTIONS-USING-BIGDATA-TECHNOLOGY` — Nền tảng toán học và logic chuẩn mực của bài toán **Anomaly Detection / Outlier Detection** (AUROC, Precision, Recall, Imbalanced Data).
+  - Từng làm Web Dev trái tay nhưng bị công ty cũ thao túng tâm lý (gaslighting), luân chuyển làm đủ việc linh tinh (Doc Support, Marketing, Sales, Chat...). Lương bọt bèo < 10 triệu/tháng.
   - **Phân tích vũ khí tiềm ẩn (Unfair Advantage):** 
-    - Tư duy CS vẫn còn đó (logic, hiểu hệ thống).
-    - Bộ kỹ năng mềm "độc nhất vô nhị" mà dân kỹ thuật xưởng máy hiếm ai có: Viết tài liệu kỹ thuật cực chuẩn (Doc), kỹ năng giao tiếp/thuyết phục (Sales/KOL), hiểu tâm lý khách hàng/người dùng. Khi kết hợp với công nghệ Machine Vision & PC Control, đây sẽ là mẫu kỹ sư **Application / Solution Architect** cực kỳ đắt giá!
-  - **Tâm thế mới:** Quyết tâm không để bị "bào" vô nghĩa nữa. Dùng chính khoảng thời gian còn lại của hợp đồng để tích lũy kiến thức thực chiến, lấy lại sự tự tin của dân CS, đổi đời và mua xe **Kia Sportage**.
+    - Tư duy CS vững chắc (Hiểu sâu bản chất Anomaly Detection, cấu trúc dữ liệu, OOP, Multi-threading).
+    - Khả năng chỉ huy AI (AI Prompt Engineering) giải quyết các bài toán kỹ thuật phức tạp (tiêu biểu như nâng cấp extension bảo mật chuẩn W3C WebAuthn `smart-passkey-authenticator`).
+    - Kỹ năng mềm hiếm có: Viết tài liệu chuẩn chỉ, giao tiếp thuyết phục, ngoại hình cao 1m80, 76kg đĩnh đạc.
+  - **Địa bàn chiến lược số 1:**
+    - **Nhà tại Thị trấn Lai Cách, Cẩm Giàng, Hải Dương.**
+    - Mục tiêu đỉnh chóp: **Hyundai Kefico Vietnam (KCN Đại An, TP. Hải Dương)** — chỉ cách nhà ở Lai Cách 2–3km (5 phút vít ga xe máy dọc QL5). Nơi sản xuất hộp đen ECU, hộp số và cảm biến cho chính các dòng xe Hyundai và **KIA SPORTAGE**!
 - **Mục tiêu tối thượng (North Star):**
-  - **Tài chính:** Nâng bậc lương lên 15tr (bước đệm) $\to$ 25tr – 40tr+ (sau 1-2 năm).
-  - **Mục tiêu hữu hình:** Tự tay mua và nuôi chiếc **Kia Sportage** bằng chính thu nhập chuyên môn kỹ thuật cao.
-  - **Sự nghiệp:** Trở thành Kỹ sư Machine Vision & PC Control cứng cáp tại các tập đoàn FDI / vendor công nghệ lớn (Hàn Quốc, Mỹ, Nhật, Đài Loan như Sejong Dynamics, Basler, Cognex, Hansol, Foxconn...).
+  - **Tài chính:** Nâng bậc lương lên 18tr – 25tr (bước đệm) $\to$ 30tr – 40tr+ tại các tập đoàn FDI (Hyundai Kefico, Hoya, Nidec, Foxconn...).
+  - **Mục tiêu hữu hình:** Tự tay mua và nuôi chiếc **Kia Sportage** biển 34 bằng chính thu nhập chuyên môn kỹ thuật cao.
 
 ---
 
