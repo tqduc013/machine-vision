@@ -114,7 +114,9 @@ dotnet run
 ### 4. Công Cụ Mô Phỏng & Sát Hạch Trực Quan
 
 - **Mô phỏng 5 loại đèn Quang học Ray-tracing:** Mở file [`lighting_simulator.html`](lighting_simulator.html).
+- **Mô phỏng So sánh Cổ điển vs AI Anomaly PatchCore:** Mở file [`anomaly_simulator.html`](anomaly_simulator.html).
 - **Phòng thi sát hạch 50 câu bấm giờ 45 phút:** Mở file [`master_exam_50.html`](master_exam_50.html).
+- **Bản đồ Cơ hội Việc làm Hải Dương & Hưng Yên:** Xem [`docs/hai_duong_hung_yen_job_market.md`](docs/hai_duong_hung_yen_job_market.md).
 
 ---
 

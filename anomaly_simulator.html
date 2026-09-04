@@ -1,0 +1,291 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>MÔ PHỎNG SO SÁNH: RULE-BASED OPENCV vs AI ANOMALY DETECTION (PATCHCORE)</title>
+  <script src="https://www.gstatic.com/antigravity/web/dev/tailwindcss.min.js"></script>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;700;800&family=Inter:wght@400;500;600;700;800&display=swap');
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      background: radial-gradient(ellipse 80% 50% at 50% -10%, rgba(99, 102, 241, 0.15), transparent), #020617;
+      min-height: 100vh;
+    }
+    .font-mono { font-family: 'JetBrains Mono', monospace; }
+    .glass-panel { background: rgba(15, 23, 42, 0.85) !important; backdrop-filter: blur(14px); }
+  </style>
+</head>
+<body class="bg-slate-950 text-slate-100 p-3 sm:p-6 min-h-screen">
+
+  <div class="max-w-6xl mx-auto space-y-4">
+    
+    <!-- Header -->
+    <header class="glass-panel border border-slate-800 rounded-2xl p-5 shadow-2xl flex flex-wrap items-center justify-between gap-4">
+      <div>
+        <div class="flex items-center gap-2">
+          <span class="px-2.5 py-0.5 rounded-full text-xs font-bold bg-indigo-500/20 text-indigo-400 border border-indigo-500/30 font-mono">
+            BƯỚC CHUYỂN MÌNH • KHÓA 1 ➔ KHÓA 2
+          </span>
+          <span class="text-xs font-mono text-emerald-400 font-bold">ANOMALY SIMULATOR</span>
+        </div>
+        <h1 class="text-xl sm:text-2xl font-black text-white mt-1">SO SÁNH XỬ LÝ ẢNH CỔ ĐIỂN vs TRÍ TUỆ NHÂN TẠO PATCHCORE</h1>
+        <p class="text-xs text-slate-400 mt-0.5">Thấu hiểu lý do vì sao AI Anomaly Detection là vũ khí không thể thiếu trong các nhà máy bán dẫn hiện đại</p>
+      </div>
+
+      <div class="flex items-center gap-2">
+        <button onclick="setScenario('clean')" class="px-3 py-1.5 rounded-xl border border-slate-700 bg-slate-900 hover:bg-slate-800 text-xs font-mono text-slate-300 transition">
+          1. Mẫu Chuẩn (OK)
+        </button>
+        <button onclick="setScenario('complex_texture')" class="px-3 py-1.5 rounded-xl border border-amber-500/40 bg-amber-950/40 hover:bg-amber-900/60 text-xs font-mono text-amber-300 transition">
+          2. Kim Loại Phay Xước
+        </button>
+        <button onclick="setScenario('micro_scratch')" class="px-3 py-1.5 rounded-xl border border-rose-500/40 bg-rose-950/40 hover:bg-rose-900/60 text-xs font-mono text-rose-300 transition">
+          3. Vết Xước Siêu Vi (Defect)
+        </button>
+      </div>
+    </header>
+
+    <!-- Main Comparison 2 Columns -->
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+      
+      <!-- COLUMN 1: RULE-BASED OPENCV (KHÓA 1) -->
+      <div class="glass-panel border border-slate-800 rounded-2xl p-4 sm:p-5 space-y-4 flex flex-col justify-between">
+        <div>
+          <div class="flex items-center justify-between border-b border-slate-800 pb-3">
+            <div class="flex items-center gap-2">
+              <span class="w-3 h-3 rounded-full bg-sky-500"></span>
+              <h2 class="font-bold text-base text-sky-400">1. THUẬT TOÁN CỔ ĐIỂN (RULE-BASED)</h2>
+            </div>
+            <span class="text-[11px] font-mono text-slate-400 bg-slate-900 px-2 py-0.5 rounded border border-slate-800">Canny / Threshold</span>
+          </div>
+
+          <!-- Canvas Viewport -->
+          <div class="mt-3 relative rounded-xl overflow-hidden bg-black border border-slate-800 aspect-[4/3] flex items-center justify-center">
+            <canvas id="canvasClassic" width="400" height="300" class="w-full h-full object-contain"></canvas>
+            <div id="badgeClassic" class="absolute top-3 left-3 px-2.5 py-1 rounded-lg text-xs font-mono font-bold bg-emerald-950/90 text-emerald-400 border border-emerald-500/40">
+              STATUS: PASS (OK)
+            </div>
+          </div>
+
+          <!-- Analysis Details -->
+          <div class="mt-3 p-3 rounded-xl bg-slate-900/80 border border-slate-800 space-y-1.5 text-xs">
+            <div class="text-slate-400 font-mono">CƠ CHẾ: <span class="text-slate-200">Tìm cạnh Canny & Đếm số pixel vượt ngưỡng.</span></div>
+            <div class="text-slate-400 font-mono">CYCLE TIME: <span class="text-sky-400 font-bold">2.8 ms (Siêu nhanh)</span></div>
+            <div id="descClassic" class="text-slate-300 pt-1 leading-relaxed">
+              Mẫu nhẵn phẳng: Thuật toán nhận diện tốt, không có cạnh lạ.
+            </div>
+          </div>
+        </div>
+
+        <div id="boxClassicVerdict" class="p-3 rounded-xl border border-emerald-500/30 bg-emerald-950/30 text-xs font-mono text-emerald-300">
+          ✓ Hoạt động hoàn hảo với bề mặt trơn nhẵn đơn giản.
+        </div>
+      </div>
+
+      <!-- COLUMN 2: AI ANOMALY DETECTION (KHÓA 2) -->
+      <div class="glass-panel border-2 border-indigo-500/40 rounded-2xl p-4 sm:p-5 space-y-4 flex flex-col justify-between shadow-xl shadow-indigo-500/10">
+        <div>
+          <div class="flex items-center justify-between border-b border-slate-800 pb-3">
+            <div class="flex items-center gap-2">
+              <span class="w-3 h-3 rounded-full bg-indigo-500 animate-pulse"></span>
+              <h2 class="font-bold text-base text-indigo-400">2. AI ANOMALY DETECTION (PATCHCORE)</h2>
+            </div>
+            <span class="text-[11px] font-mono text-indigo-400 bg-indigo-950/60 px-2 py-0.5 rounded border border-indigo-500/40">Memory Bank Heatmap</span>
+          </div>
+
+          <!-- Canvas Viewport -->
+          <div class="mt-3 relative rounded-xl overflow-hidden bg-black border border-slate-800 aspect-[4/3] flex items-center justify-center">
+            <canvas id="canvasAi" width="400" height="300" class="w-full h-full object-contain"></canvas>
+            <div id="badgeAi" class="absolute top-3 left-3 px-2.5 py-1 rounded-lg text-xs font-mono font-bold bg-emerald-950/90 text-emerald-400 border border-emerald-500/40">
+              STATUS: PASS (OK)
+            </div>
+          </div>
+
+          <!-- Analysis Details -->
+          <div class="mt-3 p-3 rounded-xl bg-slate-900/80 border border-slate-800 space-y-1.5 text-xs">
+            <div class="text-slate-400 font-mono">CƠ CHẾ: <span class="text-indigo-300 font-semibold">Trích xuất đặc trưng sâu ➔ So sánh với Memory Bank ảnh chuẩn.</span></div>
+            <div class="text-slate-400 font-mono">ANOMALY SCORE: <strong id="valScore" class="text-emerald-400 font-bold text-sm">0.08</strong> / Threshold 0.50</div>
+            <div id="descAi" class="text-slate-300 pt-1 leading-relaxed">
+              AI hiểu cấu trúc bình thường của vật liệu: Không phát hiện bất thường.
+            </div>
+          </div>
+        </div>
+
+        <div id="boxAiVerdict" class="p-3 rounded-xl border border-indigo-500/30 bg-indigo-950/30 text-xs font-mono text-indigo-300">
+          ✨ Tự động nhận diện cấu trúc vật liệu phức tạp không cần gõ code if/else!
+        </div>
+      </div>
+
+    </div>
+
+    <!-- Bottom Bridge Explanation -->
+    <div class="glass-panel border border-slate-800 rounded-2xl p-5 space-y-3">
+      <h3 class="text-sm font-bold text-white uppercase tracking-wider font-mono flex items-center gap-2">
+        <span>💡 TỔNG KẾT BẢN CHẤT KỸ THUẬT: KHI NÀO DÙNG GÌ?</span>
+      </h3>
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-3 text-xs">
+        <div class="p-3 rounded-xl bg-slate-900 border border-slate-800 space-y-1">
+          <strong class="text-sky-400 block font-mono">RULE-BASED (Khóa 1):</strong>
+          <p class="text-slate-300">Tối ưu cho đo kích thước (Caliper), đọc mã QR, định vị góc xoay θ, và bắt sứt mẻ hình học lớn. Chạy siêu nhanh 2-3ms.</p>
+        </div>
+        <div class="p-3 rounded-xl bg-slate-900 border border-slate-800 space-y-1">
+          <strong class="text-indigo-400 block font-mono">AI ANOMALY (Khóa 2):</strong>
+          <p class="text-slate-300">Tối ưu cho bắt vết xước mờ, rạn nứt nano, dị vật trên bề mặt kim loại/vải/PCB phức tạp mà không cần thu thập ảnh lỗi.</p>
+        </div>
+        <div class="p-3 rounded-xl bg-slate-900 border border-emerald-500/40 space-y-1 bg-emerald-950/20">
+          <strong class="text-emerald-400 block font-mono">SỨC MẠNH KẾT HỢP:</strong>
+          <p class="text-emerald-200">Khóa 1 đo đạc + Khóa 2 soi khuyết tật nano = Giải pháp trọn gói $100\%$ không một lỗi nào lọt qua được!</p>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <script>
+    let currentScenario = 'clean';
+
+    function setScenario(sc) {
+      currentScenario = sc;
+      draw();
+    }
+
+    function draw() {
+      const cClassic = document.getElementById('canvasClassic');
+      const ctxC = cClassic.getContext('2d');
+
+      const cAi = document.getElementById('canvasAi');
+      const ctxA = cAi.getContext('2d');
+
+      const badgeC = document.getElementById('badgeClassic');
+      const descC = document.getElementById('descClassic');
+      const boxC = document.getElementById('boxClassicVerdict');
+
+      const badgeA = document.getElementById('badgeAi');
+      const descA = document.getElementById('descAi');
+      const boxA = document.getElementById('boxAiVerdict');
+      const valScore = document.getElementById('valScore');
+
+      // Clear
+      ctxC.fillStyle = "#090d16"; ctxC.fillRect(0, 0, 400, 300);
+      ctxA.fillStyle = "#090d16"; ctxA.fillRect(0, 0, 400, 300);
+
+      // Draw Base Chip
+      function drawBaseChip(ctx) {
+        ctx.fillStyle = "#1e293b";
+        ctx.strokeStyle = "#475569";
+        ctx.lineWidth = 2;
+        ctx.fillRect(80, 50, 240, 200);
+        ctx.strokeRect(80, 50, 240, 200);
+
+        // Chip core die
+        ctx.fillStyle = "#0f172a";
+        ctx.fillRect(110, 80, 180, 140);
+        ctx.strokeRect(110, 80, 180, 140);
+
+        // Laser text
+        ctx.fillStyle = "#64748b";
+        ctx.font = "bold 12px Inter, sans-serif";
+        ctx.fillText("APPLE A18 PRO", 145, 150);
+      }
+
+      drawBaseChip(ctxC);
+      drawBaseChip(ctxA);
+
+      if (currentScenario === 'clean') {
+        // --- 1. MẪU CHUẨN ---
+        badgeC.className = "absolute top-3 left-3 px-2.5 py-1 rounded-lg text-xs font-mono font-bold bg-emerald-950/90 text-emerald-400 border border-emerald-500/40";
+        badgeC.innerText = "STATUS: PASS (OK)";
+        descC.innerHTML = "Bề mặt phẳng nhẵn: Canny không phát hiện cạnh lạ. Phán quyết chính xác.";
+        boxC.className = "p-3 rounded-xl border border-emerald-500/30 bg-emerald-950/30 text-xs font-mono text-emerald-300";
+        boxC.innerText = "✓ Hoạt động hoàn hảo với bề mặt trơn nhẵn đơn giản.";
+
+        badgeA.className = "absolute top-3 left-3 px-2.5 py-1 rounded-lg text-xs font-mono font-bold bg-emerald-950/90 text-emerald-400 border border-emerald-500/40";
+        badgeA.innerText = "STATUS: PASS (OK)";
+        descA.innerHTML = "PatchCore trích xuất đặc trưng và so sánh với Memory Bank: Độ tương đồng 99.2%.";
+        boxA.className = "p-3 rounded-xl border border-indigo-500/30 bg-indigo-950/30 text-xs font-mono text-indigo-300";
+        boxA.innerText = "✨ Memory Bank xác nhận toàn bộ bề mặt khớp 100% với ảnh chuẩn.";
+        valScore.innerText = "0.08 (Rất an toàn)";
+        valScore.className = "text-emerald-400 font-bold text-sm";
+
+      } else if (currentScenario === 'complex_texture') {
+        // --- 2. BỀ MẶT PHAY XƯỚC PHỨC TẠP ---
+        // Vẽ vân phay kim loại
+        for (let i = 85; i < 315; i += 6) {
+          ctxC.strokeStyle = "rgba(148, 163, 184, 0.4)";
+          ctxC.beginPath();
+          ctxC.moveTo(i, 55); ctxC.lineTo(i + 15, 245); ctxC.stroke();
+
+          ctxA.strokeStyle = "rgba(148, 163, 184, 0.4)";
+          ctxA.beginPath();
+          ctxA.moveTo(i, 55); ctxA.lineTo(i + 15, 245); ctxA.stroke();
+        }
+
+        // Cổ điển: Bị lừa bởi vân phay kim loại!
+        ctxC.fillStyle = "rgba(239, 68, 68, 0.25)";
+        ctxC.fillRect(80, 50, 240, 200);
+        ctxC.strokeStyle = "#ef4444";
+        ctxC.strokeRect(80, 50, 240, 200);
+
+        badgeC.className = "absolute top-3 left-3 px-2.5 py-1 rounded-lg text-xs font-mono font-bold bg-rose-950/90 text-rose-400 border border-rose-500/40 animate-pulse";
+        badgeC.innerText = "STATUS: FAIL (NG - BÁO LỖI GIẢ!)";
+        descC.innerHTML = "⚠️ <strong>TAI NẠN OVERKILL:</strong> Canny phát hiện 850 pixel cạnh do vân phay xước tự nhiên và phạt nhầm sản phẩm tốt thành NG!";
+        boxC.className = "p-3 rounded-xl border border-rose-500/40 bg-rose-950/40 text-xs font-mono text-rose-300";
+        boxC.innerText = "✗ Thuật toán cổ điển thất bại hoàn toàn trước vân hoa văn tự nhiên.";
+
+        // AI Anomaly: Hiểu đây là vân bình thường!
+        badgeA.className = "absolute top-3 left-3 px-2.5 py-1 rounded-lg text-xs font-mono font-bold bg-emerald-950/90 text-emerald-400 border border-emerald-500/40";
+        badgeA.innerText = "STATUS: PASS (OK - THÔNG MINH)";
+        descA.innerHTML = "AI đã học được cấu trúc vân phay xước trong tập ảnh OK ➔ Không bị đánh lừa bởi vân hoa văn!";
+        boxA.className = "p-3 rounded-xl border border-emerald-500/30 bg-emerald-950/30 text-xs font-mono text-emerald-300";
+        boxA.innerText = "✨ AI hiểu ngữ cảnh bề mặt, triệt tiêu 100% lỗi báo giả (Zero Overkill).";
+        valScore.innerText = "0.19 (Dưới ngưỡng 0.50)";
+        valScore.className = "text-emerald-400 font-bold text-sm";
+
+      } else if (currentScenario === 'micro_scratch') {
+        // --- 3. VẾT XƯỚC SIÊU VI NGOẰN NGOÈO ---
+        // Vẽ vết xước nhỏ
+        function drawScratch(ctx, color, width) {
+          ctx.strokeStyle = color;
+          ctx.lineWidth = width;
+          ctx.beginPath();
+          ctx.moveTo(160, 180);
+          ctx.bezierCurveTo(180, 185, 210, 175, 230, 190);
+          ctx.stroke();
+        }
+
+        drawScratch(ctxC, "#38bdf8", 1.5);
+        drawScratch(ctxA, "#ffffff", 1.5);
+
+        // Cổ điển: Quá mờ, Canny bỏ sót!
+        badgeC.className = "absolute top-3 left-3 px-2.5 py-1 rounded-lg text-xs font-mono font-bold bg-amber-950/90 text-amber-400 border border-amber-500/40";
+        badgeC.innerText = "STATUS: PASS (BỎ LỌT LỖI UNDERKILL!)";
+        descC.innerHTML = "⚠️ <strong>THẢM HỌA UNDERKILL:</strong> Vết xước quá mờ, không vượt qua ngưỡng threshold của Canny ➔ Sản phẩm lỗi bị lọt ra thị trường!";
+        boxC.className = "p-3 rounded-xl border border-amber-500/40 bg-amber-950/40 text-xs font-mono text-amber-300";
+        boxC.innerText = "✗ Thuật toán cổ điển bỏ lọt khuyết tật vi mô nguy hiểm.";
+
+        // AI Anomaly: Vẽ Heatmap đỏ rực ngay vết xước!
+        const radGrad = ctxA.createRadialGradient(195, 185, 5, 195, 185, 45);
+        radGrad.addColorStop(0, "rgba(239, 68, 68, 0.85)");
+        radGrad.addColorStop(0.5, "rgba(245, 158, 11, 0.5)");
+        radGrad.addColorStop(1, "rgba(56, 189, 248, 0)");
+        ctxA.fillStyle = radGrad;
+        ctxA.beginPath();
+        ctxA.arc(195, 185, 45, 0, Math.PI * 2);
+        ctxA.fill();
+
+        badgeA.className = "absolute top-3 left-3 px-2.5 py-1 rounded-lg text-xs font-mono font-bold bg-rose-950/90 text-rose-400 border border-rose-500/40 animate-pulse";
+        badgeA.innerText = "STATUS: FAIL (NG - BẮT TRÚNG VẾT NỨT NANO)";
+        descA.innerHTML = "AI phát hiện vùng đặc trưng bị lệch khỏi Memory Bank ➔ Tự động vẽ Heatmap đỏ rực định vị chính xác vết xước!";
+        boxA.className = "p-3 rounded-xl border border-rose-500/40 bg-rose-950/40 text-xs font-mono text-rose-300";
+        boxA.innerText = "🎯 Xuất sắc định vị khuyết tật siêu vi mà không cần lập trình thủ công!";
+        valScore.innerText = "0.89 (VƯỢT NGƯỠNG ANOMALY!)";
+        valScore.className = "text-rose-400 font-black text-sm";
+      }
+    }
+
+    // Init
+    draw();
+  </script>
+</body>
+</html>

@@ -90,10 +90,13 @@ Machine-Vision/
 │       ├── VisionEngine/ChipInspector.cs      # OpenCvSharp4 4G Pipeline implementation
 │       ├── ViewModels/MainViewModel.cs        # MVVM async coordinator
 │       ├── Views/MainWindow.xaml              # High-tech Dark Mode IPC XAML UI
-│       └── PCControlApp.csproj                # .NET 8 Project & NuGet configuration
 ├── lighting_simulator.html     # Interactive 2D Photon Ray-Tracing Simulator
+├── anomaly_simulator.html      # Interactive Visualizer: Classic OpenCV vs AI PatchCore Heatmap
 ├── pc_control_dashboard.html   # Real-Time 3D Digital Twin & Inspection Dashboard
 ├── master_exam_50.html         # 45-Minute 50-Question Master Examination Simulator
+├── docs/                       # Technical Roadmaps & Career Market Analyses
+│   ├── aoi_anomaly_detection_roadmap_vi.md  # 80/20 Industrial Anomaly Detection Roadmap
+│   └── hai_duong_hung_yen_job_market.md    # Local Target Companies & High-Pay Vision Jobs
 ├── AGENTS.md                   # Campaign War Log & Technical Strategy
 └── README.md                   # Project Documentation
 ```
