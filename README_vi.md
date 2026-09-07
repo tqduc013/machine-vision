@@ -36,8 +36,15 @@
   - Tích hợp bộ mô phỏng hạt photon ray-tracing tương tác 2D: [`lighting_simulator.html`](lighting_simulator.html).
 - 🖥️ **Ứng Dụng Native C# .NET 8 WPF (`PCControlApp`):**
   - Viết bằng C# OpenCvSharp4 và kiến trúc MVVM (`CommunityToolkit.Mvvm`), Dark-mode IPC, hiển thị camera, đèn LED PASS/FAIL và tính toán Yield Rate theo ca.
+- 🔬 **Module AI Anomaly Detection (PatchCore & Vectorization Ma Trận Tăng Tốc ~133 Lần):**
+  - Trích xuất đặc trưng đa tầng 3072 chiều từ lưới 400 patches ($32 \times 32\text{px}$).
+  - Xây dựng Memory Bank 20.000 vectors chuẩn hóa từ 50 bo mạch OK của tập dữ liệu thực tế DeepPCB.
+  - Tối ưu hóa ma trận song song SIMD qua hằng đẳng thức $(A-B)^2 = A^2 - 2AB + B^2$: Giảm thời gian suy luận từ **$66.54\text{s}$ xuống còn $0.5\text{s}$ ($500\text{ms}$)**.
+  - Tự động sinh Heatmap màu trực quan (Jet Colormap) và Overlay khoanh vùng khuyết tật đứt mạch li ti.
 - 📝 **Hệ Thống Thi Sát Hạch 50 Câu Master Exam (`master_exam_50.html`):**
   - Môi trường thi trắc nghiệm bấm giờ 45 phút, có bản đồ nhảy nhanh 50 câu và giải thích bản chất kỹ thuật chi tiết.
+- 📐 **Bộ Công Cụ Trực Quan Tọa Độ Công Nghiệp (2D & 3D WebGL):**
+  - [`coordinate_visualizer.html`](coordinate_visualizer.html) & [`coordinate_visualizer_3d.html`](coordinate_visualizer_3d.html) phân tích tọa độ pixel, bounding box và ma trận xoay góc thời gian thực.
 
 ---
 
@@ -126,6 +133,7 @@ dotnet run
 | :--- | :--- | :--- | :---: |
 | **Washer AOI Cycle Time** | $< 15\text{ ms}$ | **$2.8\text{ ms}$** | 🚀 Xuất Sắc |
 | **Apple A18 4G Pipeline Cycle Time** | $< 25\text{ ms}$ | **$8.5 - 11.2\text{ ms}$** | 🚀 Xuất Sắc |
+| **AI PatchCore Matrix Vectorization** | $< 2.0\text{ s}$ (400 patches vs 20k vec) | **$0.50\text{ s}$ ($500\text{ ms}$)** | ⚡ Đột Phá (x133) |
 | **Năng suất lý thuyết (Throughput)** | $> 10.000\text{ UPH}$ | **$> 36.000\text{ UPH}$** | 🚀 Xuất Sắc |
 | **Rò rỉ RAM khi chạy 24/7** | $0\text{ MB leak}$ | **$0\text{ MB leak}$** (`using var Mat`) | 🚀 Xuất Sắc |
 | **Thời gian biên dịch C# .NET 8** | $< 10\text{ s}$ | **$2.89\text{ s}$** | 🚀 Xuất Sắc |

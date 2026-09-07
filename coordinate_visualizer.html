@@ -1,0 +1,319 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <title>Mô Phỏng Trực Quan Bounding Box & Hệ Tọa Độ Ảnh</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    .grid-bg {
+      background-size: 20px 20px;
+      background-image: 
+        linear-gradient(to right, rgba(255, 255, 255, 0.05) 1px, transparent 1px),
+        linear-gradient(to bottom, rgba(255, 255, 255, 0.05) 1px, transparent 1px);
+    }
+    .iso-3d {
+      transform: perspective(900px) rotateX(28deg) rotateZ(-12deg);
+      transition: transform 0.5s ease;
+      box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.7);
+    }
+    .flat-2d {
+      transform: none;
+      transition: transform 0.5s ease;
+    }
+  </style>
+</head>
+<body class="bg-[#0b0f19] text-gray-100 p-4 font-sans antialiased min-h-screen">
+  <div class="max-w-4xl mx-auto space-y-4">
+    
+    <!-- Header -->
+    <div class="flex flex-wrap items-center justify-between gap-3 bg-[#131b2e] p-4 rounded-xl border border-blue-900/50 shadow-lg">
+      <div>
+        <div class="flex items-center gap-2">
+          <span class="w-3 h-3 rounded-full bg-emerald-400 animate-ping"></span>
+          <h1 class="text-xl font-bold text-white tracking-wide">Bộ Soi Tọa Độ Bounding Box 3D & Thước Đo Laser</h1>
+        </div>
+        <p class="text-xs text-blue-300/80 mt-1">Dễ hiểu 100% bằng hình ảnh trực quan: Thước đo, tia laser dọi tọa độ và lưới ô li</p>
+      </div>
+      <div class="flex items-center gap-2">
+        <button id="btnToggle3D" onclick="toggle3D()" class="px-3 py-1.5 text-xs font-semibold rounded-lg bg-blue-600 hover:bg-blue-500 text-white transition shadow">
+          👓 Đổi Góc Nhìn 3D / 2D
+        </button>
+      </div>
+    </div>
+
+    <!-- Quick Presets -->
+    <div class="flex flex-wrap gap-2 items-center bg-[#111827] p-3 rounded-xl border border-gray-800">
+      <span class="text-xs font-semibold text-gray-400">Chọn mẫu thử:</span>
+      <button onclick="loadPreset(100, 200, 150, 250, 'Câu hỏi vừa rồi: Chập mạch (100, 200) -> (150, 250)')" 
+        class="px-3 py-1 text-xs rounded bg-indigo-900/60 hover:bg-indigo-700 text-indigo-200 border border-indigo-500/40 transition">
+        🎯 Ví dụ vừa hỏi: (100, 200) → (150, 250)
+      </button>
+      <button onclick="loadPreset(539, 259, 592, 316, 'Vết đứt mạch DeepPCB: (539, 259) -> (592, 316)')" 
+        class="px-3 py-1 text-xs rounded bg-red-900/60 hover:bg-red-700 text-red-200 border border-red-500/40 transition">
+        ⚡ Vết đứt mạch thật: (539, 259) → (592, 316)
+      </button>
+      <button onclick="loadPreset(454, 300, 493, 396, 'Vết chập mạch DeepPCB: (454, 300) -> (493, 396)')" 
+        class="px-3 py-1 text-xs rounded bg-amber-900/60 hover:bg-amber-700 text-amber-200 border border-amber-500/40 transition">
+        🔌 Vết chập chân đồng: (454, 300) → (493, 396)
+      </button>
+    </div>
+
+    <!-- Main Workspace with Rulers & Canvas -->
+    <div class="bg-[#111827] p-4 rounded-xl border border-gray-800 shadow-2xl flex flex-col items-center">
+      
+      <!-- Current Active Preset Label -->
+      <div id="presetLabel" class="text-xs text-amber-400 font-mono mb-2 bg-amber-950/40 px-3 py-1 rounded-full border border-amber-800/50">
+        Đang xem: Ví dụ vừa hỏi: (100, 200) → (150, 250)
+      </div>
+
+      <!-- Canvas container with rulers -->
+      <div class="relative p-6">
+        
+        <!-- Top Ruler (Trục X) -->
+        <div class="absolute top-0 left-12 right-0 h-6 flex justify-between text-[10px] font-mono text-cyan-400 border-b border-cyan-500/40 select-none">
+          <span>0 (Gốc)</span>
+          <span>100px</span>
+          <span>200px</span>
+          <span>300px</span>
+          <span>400px</span>
+          <span>500px</span>
+          <span>640px (Mép phải)</span>
+        </div>
+        
+        <!-- Left Ruler (Trục Y) -->
+        <div class="absolute top-6 bottom-0 left-0 w-12 flex flex-col justify-between text-[10px] font-mono text-emerald-400 border-r border-emerald-500/40 pr-1 text-right select-none">
+          <span>0 (Đỉnh)</span>
+          <span>100px</span>
+          <span>200px</span>
+          <span>300px</span>
+          <span>400px</span>
+          <span>500px</span>
+          <span>640px (Đáy)</span>
+        </div>
+
+        <!-- The Image Board (640x640 scaled to 480x480) -->
+        <div id="boardContainer" class="flat-2d ml-12 mt-6 relative w-[480px] h-[480px] bg-[#070b14] border-2 border-dashed border-gray-700 rounded-lg overflow-hidden grid-bg shadow-inner">
+          
+          <!-- Subtle PCB pattern background -->
+          <svg class="absolute inset-0 w-full h-full opacity-20 pointer-events-none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M 50 100 L 150 100 L 200 150 L 400 150" stroke="#10b981" stroke-width="2" fill="none"/>
+            <path d="M 80 400 L 250 400 L 300 350 L 450 350" stroke="#10b981" stroke-width="2" fill="none"/>
+            <circle cx="200" cy="150" r="4" fill="#10b981"/>
+            <circle cx="300" cy="350" r="4" fill="#10b981"/>
+          </svg>
+
+          <!-- Laser Guides -->
+          <div id="laserX1" class="absolute top-0 w-0.5 bg-cyan-400/70 border-l border-dashed border-cyan-300 pointer-events-none shadow-[0_0_8px_#06b6d4]"></div>
+          <div id="laserX2" class="absolute top-0 w-0.5 bg-yellow-400/70 border-l border-dashed border-yellow-300 pointer-events-none shadow-[0_0_8px_#eab308]"></div>
+          <div id="laserY1" class="absolute left-0 h-0.5 bg-cyan-400/70 border-t border-dashed border-cyan-300 pointer-events-none shadow-[0_0_8px_#06b6d4]"></div>
+          <div id="laserY2" class="absolute left-0 h-0.5 bg-yellow-400/70 border-t border-dashed border-yellow-300 pointer-events-none shadow-[0_0_8px_#eab308]"></div>
+
+          <!-- The Bounding Box -->
+          <div id="bBox" class="absolute border-2 border-red-500 bg-red-500/20 backdrop-blur-[1px] shadow-[0_0_15px_rgba(239,68,68,0.5)] flex flex-col justify-between transition-all duration-300">
+            
+            <!-- Pin Góc Trên - Trái -->
+            <div class="relative -top-2.5 -left-2.5 w-5 h-5 bg-cyan-500 rounded-full border-2 border-white shadow-[0_0_10px_#06b6d4] flex items-center justify-center cursor-pointer z-20">
+              <span class="w-1.5 h-1.5 bg-white rounded-full"></span>
+              <div class="absolute -top-6 -left-12 bg-cyan-900/90 text-cyan-200 border border-cyan-400 px-1.5 py-0.5 rounded text-[10px] font-mono whitespace-nowrap shadow">
+                Góc Trên-Trái: <span id="lblPoint1">(100, 200)</span>
+              </div>
+            </div>
+
+            <!-- Inside box label -->
+            <div class="text-center my-auto px-1 pointer-events-none">
+              <span class="text-[11px] font-bold text-red-300 bg-red-950/80 px-2 py-0.5 rounded border border-red-600/50 uppercase tracking-wider block">
+                VÙNG LỖI HỎNG
+              </span>
+              <span id="lblDimensionsInside" class="text-[10px] font-mono text-yellow-300 mt-1 block">
+                50px × 50px
+              </span>
+            </div>
+
+            <!-- Pin Góc Dưới - Phải -->
+            <div class="relative -bottom-2.5 -right-2.5 self-end w-5 h-5 bg-yellow-400 rounded-full border-2 border-white shadow-[0_0_10px_#eab308] flex items-center justify-center cursor-pointer z-20">
+              <span class="w-1.5 h-1.5 bg-black rounded-full"></span>
+              <div class="absolute -bottom-6 -right-12 bg-yellow-900/90 text-yellow-200 border border-yellow-400 px-1.5 py-0.5 rounded text-[10px] font-mono whitespace-nowrap shadow">
+                Góc Dưới-Phải: <span id="lblPoint2">(150, 250)</span>
+              </div>
+            </div>
+
+            <!-- Dimension Bar: Width -->
+            <div id="dimWidthBar" class="absolute -top-5 left-0 right-0 text-center text-[10px] font-mono text-cyan-300 border-b border-cyan-400 pb-0.5">
+              ↔ Rộng: <span id="valWidth">50px</span>
+            </div>
+
+            <!-- Dimension Bar: Height -->
+            <div id="dimHeightBar" class="absolute top-0 bottom-0 -right-16 flex items-center text-[10px] font-mono text-emerald-300 border-l border-emerald-400 pl-1">
+              ↕ Cao: <span id="valHeight">50px</span>
+            </div>
+
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Interactive Sliders -->
+    <div class="bg-[#111827] p-4 rounded-xl border border-gray-800 space-y-3">
+      <h3 class="text-sm font-semibold text-gray-300 flex items-center gap-2">
+        <span>🎮 Thử Kéo Trượt Tọa Độ (Để Thấy Cái Hộp Phóng To Thu Nhỏ Tự Động):</span>
+      </h3>
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs font-mono">
+        
+        <!-- X1, Y1 -->
+        <div class="bg-cyan-950/30 p-3 rounded-lg border border-cyan-800/50 space-y-2">
+          <div class="text-cyan-400 font-bold flex justify-between">
+            <span>📍 Góc Trên-Trái:</span>
+            <span id="sliderVal1">(X1: 100, Y1: 200)</span>
+          </div>
+          <div>
+            <label class="text-gray-400 block mb-1">X1 (Mép Trái): <span id="txtX1">100</span>px</label>
+            <input id="rngX1" type="range" min="0" max="500" value="100" class="w-full accent-cyan-400" oninput="updateFromSliders()">
+          </div>
+          <div>
+            <label class="text-gray-400 block mb-1">Y1 (Mép Đỉnh Trên): <span id="txtY1">200</span>px</label>
+            <input id="rngY1" type="range" min="0" max="500" value="200" class="w-full accent-cyan-400" oninput="updateFromSliders()">
+          </div>
+        </div>
+
+        <!-- X2, Y2 -->
+        <div class="bg-yellow-950/30 p-3 rounded-lg border border-yellow-800/50 space-y-2">
+          <div class="text-yellow-400 font-bold flex justify-between">
+            <span>📍 Góc Dưới-Phải:</span>
+            <span id="sliderVal2">(X2: 150, Y2: 250)</span>
+          </div>
+          <div>
+            <label class="text-gray-400 block mb-1">X2 (Mép Phải): <span id="txtX2">150</span>px</label>
+            <input id="rngX2" type="range" min="100" max="640" value="150" class="w-full accent-yellow-400" oninput="updateFromSliders()">
+          </div>
+          <div>
+            <label class="text-gray-400 block mb-1">Y2 (Mép Đáy Dưới): <span id="txtY2">250</span>px</label>
+            <input id="rngY2" type="range" min="100" max="640" value="250" class="w-full accent-yellow-400" oninput="updateFromSliders()">
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- Plain Vietnamese Explanation Card -->
+    <div class="bg-gradient-to-br from-[#131b2e] to-[#0f172a] p-4 rounded-xl border border-blue-900/60 space-y-3">
+      <h3 class="text-sm font-bold text-emerald-400 uppercase tracking-wider flex items-center gap-2">
+        💡 BẢN CHẤT CỐT LÕI (BỎ TÚI ĐỂ ĐI PHỎNG VẤN):
+      </h3>
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-3 text-xs leading-relaxed text-gray-300">
+        <div class="bg-black/30 p-3 rounded border border-gray-800">
+          <p class="font-bold text-cyan-300 mb-1">1. Tọa độ X (Đi ngang từ Trái sang Phải):</p>
+          <p>Mép trái bắt đầu ở <span id="expX1" class="text-cyan-400 font-mono font-bold">100</span>, mép phải kéo tới <span id="expX2" class="text-yellow-400 font-mono font-bold">150</span>.</p>
+          <p class="mt-1 text-gray-400">➡️ Chiều Rộng = <span id="expCalcW" class="text-white font-mono font-bold">150 - 100 = 50px</span></p>
+        </div>
+        <div class="bg-black/30 p-3 rounded border border-gray-800">
+          <p class="font-bold text-emerald-300 mb-1">2. Tọa độ Y (Đi dọc từ Trên xuống Dưới):</p>
+          <p>Đỉnh trên bắt đầu ở <span id="expY1" class="text-cyan-400 font-mono font-bold">200</span>, đáy dưới kéo tới <span id="expY2" class="text-yellow-400 font-mono font-bold">250</span>.</p>
+          <p class="mt-1 text-gray-400">➡️ Chiều Cao = <span id="expCalcH" class="text-white font-mono font-bold">250 - 200 = 50px</span></p>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <script>
+    const SCALE = 480 / 640;
+    let is3D = false;
+
+    let curX1 = 100, curY1 = 200, curX2 = 150, curY2 = 250;
+
+    function renderBox() {
+      if (curX2 <= curX1) curX2 = curX1 + 10;
+      if (curY2 <= curY1) curY2 = curY1 + 10;
+
+      const widthPx = curX2 - curX1;
+      const heightPx = curY2 - curY1;
+
+      const left = curX1 * SCALE;
+      const top = curY1 * SCALE;
+      const w = widthPx * SCALE;
+      const h = heightPx * SCALE;
+
+      const bBox = document.getElementById('bBox');
+      bBox.style.left = left + 'px';
+      bBox.style.top = top + 'px';
+      bBox.style.width = w + 'px';
+      bBox.style.height = h + 'px';
+
+      const lx1 = document.getElementById('laserX1');
+      lx1.style.left = left + 'px';
+      lx1.style.height = top + 'px';
+
+      const lx2 = document.getElementById('laserX2');
+      lx2.style.left = (left + w) + 'px';
+      lx2.style.height = (top + h) + 'px';
+
+      const ly1 = document.getElementById('laserY1');
+      ly1.style.top = top + 'px';
+      ly1.style.width = left + 'px';
+
+      const ly2 = document.getElementById('laserY2');
+      ly2.style.top = (top + h) + 'px';
+      ly2.style.width = (left + w) + 'px';
+
+      document.getElementById('lblPoint1').innerText = `(${curX1}, ${curY1})`;
+      document.getElementById('lblPoint2').innerText = `(${curX2}, ${curY2})`;
+      document.getElementById('valWidth').innerText = `${widthPx}px`;
+      document.getElementById('valHeight').innerText = `${heightPx}px`;
+      document.getElementById('lblDimensionsInside').innerText = `${widthPx}px × ${heightPx}px`;
+
+      document.getElementById('rngX1').value = curX1;
+      document.getElementById('rngY1').value = curY1;
+      document.getElementById('rngX2').value = curX2;
+      document.getElementById('rngY2').value = curY2;
+
+      document.getElementById('txtX1').innerText = curX1;
+      document.getElementById('txtY1').innerText = curY1;
+      document.getElementById('txtX2').innerText = curX2;
+      document.getElementById('txtY2').innerText = curY2;
+
+      document.getElementById('sliderVal1').innerText = `(X1: ${curX1}, Y1: ${curY1})`;
+      document.getElementById('sliderVal2').innerText = `(X2: ${curX2}, Y2: ${curY2})`;
+
+      document.getElementById('expX1').innerText = curX1;
+      document.getElementById('expX2').innerText = curX2;
+      document.getElementById('expCalcW').innerText = `${curX2} - ${curX1} = ${widthPx}px`;
+
+      document.getElementById('expY1').innerText = curY1;
+      document.getElementById('expY2').innerText = curY2;
+      document.getElementById('expCalcH').innerText = `${curY2} - ${curY1} = ${heightPx}px`;
+    }
+
+    function updateFromSliders() {
+      curX1 = parseInt(document.getElementById('rngX1').value);
+      curY1 = parseInt(document.getElementById('rngY1').value);
+      curX2 = parseInt(document.getElementById('rngX2').value);
+      curY2 = parseInt(document.getElementById('rngY2').value);
+      document.getElementById('presetLabel').innerText = "Tùy chỉnh tự do bằng con trượt";
+      renderBox();
+    }
+
+    function loadPreset(x1, y1, x2, y2, label) {
+      curX1 = x1; curY1 = y1; curX2 = x2; curY2 = y2;
+      document.getElementById('presetLabel').innerText = `Đang xem: ${label}`;
+      renderBox();
+    }
+
+    function toggle3D() {
+      is3D = !is3D;
+      const board = document.getElementById('boardContainer');
+      const btn = document.getElementById('btnToggle3D');
+      if (is3D) {
+        board.className = 'iso-3d ml-12 mt-6 relative w-[480px] h-[480px] bg-[#070b14] border-2 border-dashed border-gray-700 rounded-lg overflow-hidden grid-bg';
+        btn.innerText = '📐 Đổi Về Góc Phẳng 2D';
+        btn.className = 'px-3 py-1.5 text-xs font-semibold rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white transition shadow';
+      } else {
+        board.className = 'flat-2d ml-12 mt-6 relative w-[480px] h-[480px] bg-[#070b14] border-2 border-dashed border-gray-700 rounded-lg overflow-hidden grid-bg';
+        btn.innerText = '👓 Đổi Góc Nhìn 3D / 2D';
+        btn.className = 'px-3 py-1.5 text-xs font-semibold rounded-lg bg-blue-600 hover:bg-blue-500 text-white transition shadow';
+      }
+    }
+
+    renderBox();
+  </script>
+</body>
+</html>

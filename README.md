@@ -36,8 +36,15 @@
   - Includes real-time 2D interactive photon ray-tracing simulator: [`lighting_simulator.html`](lighting_simulator.html).
 - 🖥️ **Native Industrial C# .NET 8 WPF Application (`PCControlApp`):**
   - Built with modern MVVM (`CommunityToolkit.Mvvm`), Dark-mode industrial IPC HUD, live camera stream, pass/fail LED indicators, and shift yield rate analytics.
+- 🔬 **AI Anomaly Detection Lab (PatchCore & Matrix Vectorization - 133x Speedup):**
+  - Multi-scale 3072-dimensional patch embeddings across a $20 \times 20$ grid (400 patches of $32 \times 32\text{px}$).
+  - Builds a 20,000-vector normalized Memory Bank from 50 golden PCB samples using real-world DeepPCB data.
+  - SIMD matrix vectorization via $(A-B)^2 = A^2 - 2AB + B^2$ algebraic expansion: Reduces inference latency from **$66.54\text{s}$ down to $0.5\text{s}$ ($500\text{ms}$)**.
+  - Generates full-resolution Jet Colormap anomaly heatmaps and overlays to localize micro open/short circuit defects.
 - 📝 **50-Question Master Sát Hạch Exam (`master_exam_50.html`):**
   - Interactive 45-minute timed examination environment covering Optics, 4G Pipeline, PLC I/O, Multi-Threading, and Factory KPIs.
+- 📐 **Industrial Coordinate Visualizers (2D & 3D WebGL):**
+  - [`coordinate_visualizer.html`](coordinate_visualizer.html) & [`coordinate_visualizer_3d.html`](coordinate_visualizer_3d.html) for real-time pixel coordinate mapping, bounding boxes, and rotation transforms.
 
 ---
 
@@ -161,6 +168,7 @@ dotnet run
 | :--- | :--- | :--- | :---: |
 | **Washer AOI Cycle Time** | $< 15\text{ ms}$ | **$2.8\text{ ms}$** | 🚀 Pass |
 | **Apple A18 4G Pipeline Cycle Time** | $< 25\text{ ms}$ | **$8.5 - 11.2\text{ ms}$** | 🚀 Pass |
+| **AI PatchCore Matrix Vectorization** | $< 2.0\text{ s}$ (400 patches vs 20k vec) | **$0.50\text{ s}$ ($500\text{ ms}$)** | ⚡ Breakthrough (x133) |
 | **Theoretical Inspection Throughput** | $> 10,000\text{ UPH}$ | **$> 36,000\text{ UPH}$** | 🚀 Pass |
 | **RAM Footprint Leakage (24/7)** | $0\text{ MB leak}$ | **$0\text{ MB leak}$** (`using var Mat`) | 🚀 Pass |
 | **C# .NET 8 Compilation Speed** | $< 10\text{ s}$ | **$2.89\text{ s}$** | 🚀 Pass |

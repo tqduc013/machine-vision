@@ -1,0 +1,628 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Mô Hình 3D Bounding Box - Chế Độ Vẽ Chỉ Đường Từng Nét Một</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;700;800&family=Inter:wght@400;600;700;800&display=swap');
+    body {
+      font-family: 'Inter', sans-serif;
+      overflow-x: hidden;
+    }
+    .font-mono { font-family: 'JetBrains Mono', monospace; }
+    #canvas-container {
+      width: 100%;
+      height: 500px;
+      position: relative;
+      cursor: grab;
+    }
+    #canvas-container:active {
+      cursor: grabbing;
+    }
+    @keyframes pulseGlow {
+      0%, 100% { transform: scale(1); opacity: 1; }
+      50% { transform: scale(1.03); opacity: 0.85; }
+    }
+    .step-active {
+      animation: pulseGlow 1.5s infinite ease-in-out;
+    }
+  </style>
+</head>
+<body class="bg-[#050811] text-gray-100 min-h-screen p-3 md:p-6 flex flex-col items-center">
+  <div class="w-full max-w-5xl space-y-4">
+
+    <!-- Header -->
+    <div class="flex flex-wrap items-center justify-between gap-3 bg-[#0c1222]/95 backdrop-blur border border-blue-900/50 p-4 rounded-2xl shadow-xl">
+      <div>
+        <div class="flex items-center gap-2">
+          <span class="inline-block w-3 h-3 rounded-full bg-emerald-400 animate-ping"></span>
+          <h1 class="text-xl md:text-2xl font-black bg-gradient-to-r from-emerald-400 via-cyan-400 to-blue-400 bg-clip-text text-transparent">
+            Chế Độ Chỉ Đường GPS: Vẽ Từng Nét Đo Bounding Box 3D
+          </h1>
+        </div>
+        <p class="text-xs text-cyan-200/80 mt-1">
+          Tia laser sẽ vẽ từng nét một từ gốc tọa độ (0,0), dọi thước và thông báo sau mỗi nét vẽ để bạn hiểu tận gốc!
+        </p>
+      </div>
+
+      <!-- Quick Camera Angle Presets -->
+      <div class="flex items-center gap-2">
+        <button onclick="setCameraView('iso')" class="px-3 py-1.5 text-xs font-semibold rounded-lg bg-blue-600 hover:bg-blue-500 text-white transition shadow">
+          🎲 Góc 3D Nghiêng
+        </button>
+        <button onclick="setCameraView('top')" class="px-3 py-1.5 text-xs font-semibold rounded-lg bg-gray-800 hover:bg-gray-700 text-cyan-300 border border-cyan-800/60 transition shadow">
+          👁️ Góc 2D Nhìn Thẳng
+        </button>
+        <button onclick="setCameraView('defect')" class="px-3 py-1.5 text-xs font-semibold rounded-lg bg-amber-600 hover:bg-amber-500 text-white transition shadow">
+          🔍 Soi Sát Vết Lỗi
+        </button>
+      </div>
+    </div>
+
+    <!-- GPS STEP-BY-STEP NOTIFICATION BANNER (VERY PROMINENT) -->
+    <div id="gpsBanner" class="w-full bg-gradient-to-r from-blue-950 via-slate-900 to-indigo-950 border-2 border-cyan-500/60 p-4 rounded-2xl shadow-[0_0_25px_rgba(6,182,212,0.25)] flex items-center justify-between gap-4 transition-all duration-300">
+      <div class="flex items-center gap-3.5">
+        <div id="gpsIcon" class="w-12 h-12 rounded-xl bg-cyan-500/20 border border-cyan-400 flex items-center justify-center text-2xl shadow-inner">
+          🚀
+        </div>
+        <div>
+          <div class="flex items-center gap-2">
+            <span id="gpsStepBadge" class="bg-cyan-500 text-black font-mono font-black text-xs px-2.5 py-0.5 rounded-full uppercase">
+              BƯỚC 0 / 5
+            </span>
+            <span id="gpsTitle" class="text-sm md:text-base font-bold text-white">
+              Sẵn sàng bắt đầu dò tìm vị trí khuyết tật
+            </span>
+          </div>
+          <p id="gpsDetail" class="text-xs md:text-sm text-cyan-200/90 mt-1 font-mono">
+            Bấm nút "▶️ Bắt Đầu Dò (Vẽ Nét 1)" bên dưới để tia laser bắt đầu xuất phát từ gốc (0, 0)!
+          </p>
+        </div>
+      </div>
+
+      <!-- Action Button inside Banner -->
+      <div class="flex items-center gap-2">
+        <button id="btnPlayVoice" onclick="replayCurrentStep()" class="p-2.5 rounded-xl bg-gray-800 hover:bg-gray-700 text-cyan-300 border border-gray-700 transition" title="Lặp lại nét này">
+          🔄
+        </button>
+      </div>
+    </div>
+
+    <!-- Stepper Navigation Bar -->
+    <div class="w-full bg-[#0c1222] p-3 rounded-2xl border border-blue-950/60 shadow-lg flex flex-wrap items-center justify-between gap-3">
+      
+      <!-- Steps Progress Dots -->
+      <div class="flex items-center gap-2 overflow-x-auto py-1">
+        <button onclick="goToStep(1)" id="stepBtn1" class="px-2.5 py-1 text-xs font-mono rounded-lg bg-gray-800 text-gray-400 border border-gray-700 hover:bg-gray-700 transition">
+          1. Tìm X1
+        </button>
+        <span class="text-gray-600">→</span>
+        <button onclick="goToStep(2)" id="stepBtn2" class="px-2.5 py-1 text-xs font-mono rounded-lg bg-gray-800 text-gray-400 border border-gray-700 hover:bg-gray-700 transition">
+          2. Tìm Y1
+        </button>
+        <span class="text-gray-600">→</span>
+        <button onclick="goToStep(3)" id="stepBtn3" class="px-2.5 py-1 text-xs font-mono rounded-lg bg-gray-800 text-gray-400 border border-gray-700 hover:bg-gray-700 transition">
+          3. Tìm X2
+        </button>
+        <span class="text-gray-600">→</span>
+        <button onclick="goToStep(4)" id="stepBtn4" class="px-2.5 py-1 text-xs font-mono rounded-lg bg-gray-800 text-gray-400 border border-gray-700 hover:bg-gray-700 transition">
+          4. Tìm Y2
+        </button>
+        <span class="text-gray-600">→</span>
+        <button onclick="goToStep(5)" id="stepBtn5" class="px-2.5 py-1 text-xs font-mono rounded-lg bg-gray-800 text-gray-400 border border-gray-700 hover:bg-gray-700 transition">
+          5. Đóng Hộp & Đo
+        </button>
+      </div>
+
+      <!-- Playback Controls -->
+      <div class="flex items-center gap-2">
+        <button onclick="prevStep()" class="px-3 py-1.5 text-xs font-bold rounded-lg bg-gray-800 hover:bg-gray-700 text-gray-300 border border-gray-700 transition">
+          ⏮️ Nét Trước
+        </button>
+        <button id="btnNext" onclick="nextStep()" class="px-4 py-1.5 text-xs font-bold rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white shadow-[0_0_15px_rgba(16,185,129,0.4)] transition">
+          ▶️ Vẽ Nét Tiếp Theo
+        </button>
+        <button id="btnAutoPlay" onclick="toggleAutoPlay()" class="px-3 py-1.5 text-xs font-bold rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white transition">
+          ⚡ Tự Động Chạy Hết
+        </button>
+      </div>
+    </div>
+
+    <!-- 3D Canvas Viewport -->
+    <div class="relative w-full rounded-2xl overflow-hidden border border-gray-800 bg-black shadow-2xl">
+      <div id="canvas-container"></div>
+
+      <!-- Preset Chooser Overlay -->
+      <div class="absolute top-3 left-3 flex flex-wrap gap-2 pointer-events-auto">
+        <button onclick="applyPresetAndReset(100, 200, 150, 250, 'Ví dụ vừa hỏi: Chập mạch (100, 200) -> (150, 250)')" 
+          class="px-2.5 py-1 text-xs rounded bg-indigo-900/80 hover:bg-indigo-700 text-indigo-200 border border-indigo-500/50 backdrop-blur shadow transition">
+          🎯 Mẫu (100, 200) → (150, 250)
+        </button>
+        <button onclick="applyPresetAndReset(539, 259, 592, 316, 'Vết đứt mạch DeepPCB: (539, 259) -> (592, 316)')" 
+          class="px-2.5 py-1 text-xs rounded bg-red-900/80 hover:bg-red-700 text-red-200 border border-red-500/50 backdrop-blur shadow transition">
+          ⚡ Mẫu Đứt Mạch (539, 259) → (592, 316)
+        </button>
+      </div>
+
+      <!-- Real-time HUD Indicator (Bottom Left) -->
+      <div class="absolute bottom-3 left-3 bg-black/85 backdrop-blur border border-blue-900/60 p-3 rounded-xl shadow-lg pointer-events-none font-mono text-xs space-y-1">
+        <div class="text-cyan-400 font-bold flex items-center gap-1.5">
+          <span class="w-2.5 h-2.5 rounded-full bg-cyan-400"></span>
+          <span>Góc 1 (Trên-Trái): <span id="hudP1">(X1: ---, Y1: ---)</span></span>
+        </div>
+        <div class="text-yellow-400 font-bold flex items-center gap-1.5">
+          <span class="w-2.5 h-2.5 rounded-full bg-yellow-400"></span>
+          <span>Góc 2 (Dưới-Phải): <span id="hudP2">(X2: ---, Y2: ---)</span></span>
+        </div>
+        <div class="text-emerald-400 font-bold pt-1 border-t border-gray-700">
+          ↔ Rộng: <span id="hudW">---</span> &nbsp;|&nbsp; ↕ Cao: <span id="hudH">---</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Plain Vietnamese Explanation Card -->
+    <div class="bg-[#0c1222] p-4 rounded-2xl border border-blue-950/60 shadow-xl text-xs space-y-2">
+      <h3 class="font-bold text-amber-400 uppercase tracking-wider flex items-center gap-2">
+        <span>📖 NHẬT KÝ VẼ TỪNG NÉT (THEO DÕI ĐẾN ĐÂU HIỂU ĐẾN ĐÓ):</span>
+      </h3>
+      <div id="stepLog" class="font-mono text-gray-300 space-y-1.5 bg-black/50 p-3 rounded-xl border border-gray-800">
+        <div class="text-gray-500 italic">Chưa bắt đầu đo. Hãy bấm nút "Vẽ Nét Tiếp Theo" ở trên!</div>
+      </div>
+    </div>
+
+  </div>
+
+  <script>
+    // --- WEB AUDIO API (SOUND CHIME FOR EACH STROKE) ---
+    function playChime(freq = 587.33, duration = 0.25) {
+      try {
+        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
+        gain.gain.setValueAtTime(0.12, audioCtx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + duration);
+        osc.connect(gain);
+        gain.connect(audioCtx.destination);
+        osc.start();
+        osc.stop(audioCtx.currentTime + duration);
+      } catch (e) {}
+    }
+
+    // --- THREE.JS SCENE SETUP ---
+    const container = document.getElementById('canvas-container');
+    const scene = new THREE.Scene();
+    scene.background = new THREE.Color(0x050811);
+
+    const gridHelper = new THREE.GridHelper(1000, 50, 0x1e293b, 0x0f172a);
+    gridHelper.position.y = -10;
+    scene.add(gridHelper);
+
+    const camera = new THREE.PerspectiveCamera(45, container.clientWidth / container.clientHeight, 1, 3000);
+    camera.position.set(280, 380, 360);
+
+    const renderer = new THREE.WebGLRenderer({ antialias: true });
+    renderer.setSize(container.clientWidth, container.clientHeight);
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    renderer.shadowMap.enabled = true;
+    container.appendChild(renderer.domElement);
+
+    const controls = new THREE.OrbitControls(camera, renderer.domElement);
+    controls.enableDamping = true;
+    controls.dampingFactor = 0.05;
+    controls.maxPolarAngle = Math.PI / 2 - 0.05;
+
+    const ambientLight = new THREE.AmbientLight(0xffffff, 0.7);
+    scene.add(ambientLight);
+
+    const dirLight = new THREE.DirectionalLight(0x38bdf8, 1.2);
+    dirLight.position.set(200, 600, 200);
+    scene.add(dirLight);
+
+    const pcbLight = new THREE.PointLight(0x10b981, 1.5, 300);
+    pcbLight.position.set(0, 100, 0);
+    scene.add(pcbLight);
+
+    // --- PCB BOARD ---
+    const PCB_SIZE = 400;
+    const PIXEL_SCALE = PCB_SIZE / 640;
+
+    function pixelToWorld(pxX, pxY) {
+      const worldX = (pxX * PIXEL_SCALE) - (PCB_SIZE / 2);
+      const worldZ = (pxY * PIXEL_SCALE) - (PCB_SIZE / 2);
+      return { x: worldX, z: worldZ };
+    }
+
+    const pcbGeo = new THREE.BoxGeometry(PCB_SIZE, 8, PCB_SIZE);
+    const pcbMat = new THREE.MeshStandardMaterial({ color: 0x064e3b, roughness: 0.3, metalness: 0.2 });
+    const pcbMesh = new THREE.Mesh(pcbGeo, pcbMat);
+    pcbMesh.position.y = 0;
+    scene.add(pcbMesh);
+
+    // Traces
+    const traceCanvas = document.createElement('canvas');
+    traceCanvas.width = 1024; traceCanvas.height = 1024;
+    const ctx = traceCanvas.getContext('2d');
+    ctx.fillStyle = '#064e3b';
+    ctx.fillRect(0, 0, 1024, 1024);
+    ctx.strokeStyle = '#eab308';
+    ctx.lineWidth = 4;
+    for (let i = 80; i < 960; i += 60) {
+      ctx.beginPath();
+      ctx.moveTo(i, 80); ctx.lineTo(i, 300); ctx.lineTo(i + 40, 340); ctx.lineTo(i + 40, 800);
+      ctx.stroke();
+    }
+    ctx.fillStyle = '#1e293b'; ctx.fillRect(380, 380, 260, 260);
+    ctx.fillStyle = '#94a3b8'; ctx.font = 'bold 28px monospace'; ctx.fillText('MCU-AI-CORE', 420, 520);
+
+    const traceTex = new THREE.CanvasTexture(traceCanvas);
+    const pcbTopGeo = new THREE.PlaneGeometry(PCB_SIZE, PCB_SIZE);
+    const pcbTop = new THREE.Mesh(pcbTopGeo, new THREE.MeshBasicMaterial({ map: traceTex }));
+    pcbTop.rotation.x = -Math.PI / 2;
+    pcbTop.position.y = 4.05;
+    scene.add(pcbTop);
+
+    // Rulers
+    const rulerX = new THREE.Mesh(new THREE.BoxGeometry(PCB_SIZE, 2, 8), new THREE.MeshBasicMaterial({ color: 0x06b6d4 }));
+    rulerX.position.set(0, 5, -PCB_SIZE / 2 - 8);
+    scene.add(rulerX);
+
+    const rulerY = new THREE.Mesh(new THREE.BoxGeometry(8, 2, PCB_SIZE), new THREE.MeshBasicMaterial({ color: 0x10b981 }));
+    rulerY.position.set(-PCB_SIZE / 2 - 8, 5, 0);
+    scene.add(rulerY);
+
+    function makeTextSprite(text, color = '#06b6d4') {
+      const c = document.createElement('canvas'); c.width = 128; c.height = 64;
+      const x = c.getContext('2d');
+      x.fillStyle = color; x.font = 'bold 28px monospace'; x.fillText(text, 10, 42);
+      const tex = new THREE.CanvasTexture(c);
+      const sprite = new THREE.Sprite(new THREE.SpriteMaterial({ map: tex, transparent: true }));
+      sprite.scale.set(32, 16, 1);
+      return sprite;
+    }
+
+    const sOrigin = makeTextSprite('(0,0)', '#ffffff');
+    sOrigin.position.set(-PCB_SIZE/2 - 16, 18, -PCB_SIZE/2 - 16);
+    scene.add(sOrigin);
+
+    const sX640 = makeTextSprite('X:640', '#06b6d4');
+    sX640.position.set(PCB_SIZE/2, 18, -PCB_SIZE/2 - 16);
+    scene.add(sX640);
+
+    const sY640 = makeTextSprite('Y:640', '#10b981');
+    sY640.position.set(-PCB_SIZE/2 - 24, 18, PCB_SIZE/2);
+    scene.add(sY640);
+
+    // --- DYNAMIC LASER STROKES & PINS ---
+    // Laser Pointer Head (Glowing Red/Cyan sphere moving along path)
+    const laserHeadGeo = new THREE.SphereGeometry(7, 16, 16);
+    const laserHeadMat = new THREE.MeshStandardMaterial({ color: 0xff0055, emissive: 0xff0055, emissiveIntensity: 1 });
+    const laserHead = new THREE.Mesh(laserHeadGeo, laserHeadMat);
+    laserHead.position.set(-PCB_SIZE/2, 10, -PCB_SIZE/2);
+    scene.add(laserHead);
+
+    // Line 1: From (0,0) across X to X1
+    const matCyanThick = new THREE.LineBasicMaterial({ color: 0x06b6d4, linewidth: 4 });
+    const lineX1 = new THREE.Line(new THREE.BufferGeometry(), matCyanThick);
+    scene.add(lineX1);
+
+    // Line 2: Down from X1 to (X1, Y1)
+    const lineY1 = new THREE.Line(new THREE.BufferGeometry(), matCyanThick);
+    scene.add(lineY1);
+
+    // Pin Point 1 (Top-Left: Cyan)
+    const pin1 = new THREE.Mesh(new THREE.SphereGeometry(6, 16, 16), new THREE.MeshStandardMaterial({ color: 0x06b6d4, emissive: 0x06b6d4, emissiveIntensity: 0.9 }));
+    pin1.visible = false;
+    scene.add(pin1);
+
+    // Line 3: Across from (X1, Y1) to (X2, Y1)
+    const matYellowThick = new THREE.LineBasicMaterial({ color: 0xeab308, linewidth: 4 });
+    const lineX2 = new THREE.Line(new THREE.BufferGeometry(), matYellowThick);
+    scene.add(lineX2);
+
+    // Line 4: Down from (X2, Y1) to (X2, Y2)
+    const lineY2 = new THREE.Line(new THREE.BufferGeometry(), matYellowThick);
+    scene.add(lineY2);
+
+    // Pin Point 2 (Bottom-Right: Yellow)
+    const pin2 = new THREE.Mesh(new THREE.SphereGeometry(6, 16, 16), new THREE.MeshStandardMaterial({ color: 0xeab308, emissive: 0xeab308, emissiveIntensity: 0.9 }));
+    pin2.visible = false;
+    scene.add(pin2);
+
+    // 3D Bounding Box Mesh (Appears on Step 5)
+    const bBoxMat = new THREE.MeshStandardMaterial({ color: 0xef4444, transparent: true, opacity: 0.4 });
+    const bBoxMesh = new THREE.Mesh(new THREE.BoxGeometry(1, 1, 1), bBoxMat);
+    bBoxMesh.visible = false;
+    scene.add(bBoxMesh);
+
+    const bBoxWire = new THREE.LineSegments(new THREE.WireframeGeometry(new THREE.BoxGeometry(1,1,1)), new THREE.LineBasicMaterial({ color: 0xff0033, linewidth: 3 }));
+    bBoxWire.visible = false;
+    scene.add(bBoxWire);
+
+    // --- STEPPER STATE ---
+    let targetX1 = 100, targetY1 = 200, targetX2 = 150, targetY2 = 250;
+    let currentStep = 0;
+    let autoPlayTimer = null;
+
+    function setLinePts(lineObj, pA, pB) {
+      const pts = [new THREE.Vector3(pA.x, 6, pA.z), new THREE.Vector3(pB.x, 6, pB.z)];
+      lineObj.geometry.dispose();
+      lineObj.geometry = new THREE.BufferGeometry().setFromPoints(pts);
+      lineObj.visible = true;
+    }
+
+    function renderStep(step) {
+      currentStep = step;
+      const origin = pixelToWorld(0, 0);
+      const ptX1Ruler = pixelToWorld(targetX1, 0);
+      const ptTopLeft = pixelToWorld(targetX1, targetY1);
+      const ptX2Ruler = pixelToWorld(targetX2, targetY1);
+      const ptBottomRight = pixelToWorld(targetX2, targetY2);
+
+      // Reset all visibility
+      lineX1.visible = false;
+      lineY1.visible = false;
+      pin1.visible = false;
+      lineX2.visible = false;
+      lineY2.visible = false;
+      pin2.visible = false;
+      bBoxMesh.visible = false;
+      bBoxWire.visible = false;
+
+      // Update progress dot styling
+      for (let i = 1; i <= 5; i++) {
+        const btn = document.getElementById(`stepBtn${i}`);
+        if (i < step) {
+          btn.className = 'px-2.5 py-1 text-xs font-mono rounded-lg bg-emerald-950/70 text-emerald-300 border border-emerald-500/50';
+        } else if (i === step) {
+          btn.className = 'px-2.5 py-1 text-xs font-mono rounded-lg bg-cyan-600 text-white font-bold border border-cyan-300 shadow-[0_0_10px_#06b6d4]';
+        } else {
+          btn.className = 'px-2.5 py-1 text-xs font-mono rounded-lg bg-gray-800 text-gray-400 border border-gray-700';
+        }
+      }
+
+      const log = document.getElementById('stepLog');
+
+      // STEP LOGIC
+      if (step === 0) {
+        laserHead.position.set(origin.x, 10, origin.z);
+        updateGpsBanner('0 / 5', 'Sẵn sàng dò tọa độ', 'Bấm "Vẽ Nét Tiếp Theo" để tia laser xuất phát từ gốc (0,0)!', '🚀');
+        document.getElementById('hudP1').innerText = `(X1: ---, Y1: ---)`;
+        document.getElementById('hudP2').innerText = `(X2: ---, Y2: ---)`;
+        document.getElementById('hudW').innerText = `---`;
+        document.getElementById('hudH').innerText = `---`;
+        log.innerHTML = `<div class="text-gray-500 italic">Chưa bắt đầu đo. Hãy bấm nút "Vẽ Nét Tiếp Theo" ở trên!</div>`;
+      }
+      else if (step === 1) {
+        // Step 1: Draw line along X ruler from (0,0) to X1
+        setLinePts(lineX1, origin, ptX1Ruler);
+        laserHead.position.set(ptX1Ruler.x, 10, ptX1Ruler.z);
+        playChime(523.25); // Do
+
+        updateGpsBanner('1 / 5', `Nét 1: Bắn tia ngang sang phải ${targetX1}px`, `Đã tìm thấy mép bên trái của cái hộp: X1 = ${targetX1} pixel trên thước X!`, '➡️');
+        document.getElementById('hudP1').innerText = `(X1: ${targetX1}, Y1: ---)`;
+
+        log.innerHTML = `
+          <div class="text-cyan-400 font-bold">✓ BƯỚC 1: Từ gốc (0,0) đi sang phải ${targetX1}px ➔ Xác định MÉP TRÁI X1 = ${targetX1}.</div>
+        `;
+      }
+      else if (step === 2) {
+        // Step 1 + Step 2: Down to Y1
+        setLinePts(lineX1, origin, ptX1Ruler);
+        setLinePts(lineY1, ptX1Ruler, ptTopLeft);
+        pin1.position.set(ptTopLeft.x, 12, ptTopLeft.z);
+        pin1.visible = true;
+        laserHead.position.set(ptTopLeft.x, 10, ptTopLeft.z);
+        playChime(659.25); // Mi
+
+        updateGpsBanner('2 / 5', `Nét 2: Bắn tia dọc xuống dưới ${targetY1}px`, `ĐÃ CHẤM XONG GÓC TRÊN - BÊN TRÁI: (${targetX1}, ${targetY1})!`, '⬇️');
+        document.getElementById('hudP1').innerText = `(${targetX1}, ${targetY1})`;
+
+        log.innerHTML = `
+          <div class="text-gray-400">✓ BƯỚC 1: Mép trái X1 = ${targetX1}.</div>
+          <div class="text-cyan-400 font-bold">✓ BƯỚC 2: Đi tụt xuống dưới ${targetY1}px ➔ CHẤM ĐƯỢC GÓC TRÊN-TRÁI: (${targetX1}, ${targetY1})!</div>
+        `;
+      }
+      else if (step === 3) {
+        // Step 1 + 2 + 3: Across to X2
+        setLinePts(lineX1, origin, ptX1Ruler);
+        setLinePts(lineY1, ptX1Ruler, ptTopLeft);
+        pin1.position.set(ptTopLeft.x, 12, ptTopLeft.z);
+        pin1.visible = true;
+
+        setLinePts(lineX2, ptTopLeft, ptX2Ruler);
+        laserHead.position.set(ptX2Ruler.x, 10, ptX2Ruler.z);
+        playChime(783.99); // Sol
+
+        const w = targetX2 - targetX1;
+        updateGpsBanner('3 / 5', `Nét 3: Mở rộng sang phải tới ${targetX2}px`, `Đã xác định mép phải X2 = ${targetX2}. Chiều Rộng cái hộp = ${targetX2} - ${targetX1} = ${w}px!`, '➡️');
+        document.getElementById('hudW').innerText = `${w}px`;
+
+        log.innerHTML = `
+          <div class="text-gray-400">✓ BƯỚC 1: Mép trái X1 = ${targetX1}.</div>
+          <div class="text-gray-400">✓ BƯỚC 2: Góc trên-trái (${targetX1}, ${targetY1}).</div>
+          <div class="text-yellow-400 font-bold">✓ BƯỚC 3: Mở rộng sang phải tới X2 = ${targetX2} ➔ Chiều Rộng = ${targetX2} - ${targetX1} = ${w}px!</div>
+        `;
+      }
+      else if (step === 4) {
+        // Step 1 + 2 + 3 + 4: Down to Y2
+        setLinePts(lineX1, origin, ptX1Ruler);
+        setLinePts(lineY1, ptX1Ruler, ptTopLeft);
+        pin1.position.set(ptTopLeft.x, 12, ptTopLeft.z);
+        pin1.visible = true;
+
+        setLinePts(lineX2, ptTopLeft, ptX2Ruler);
+        setLinePts(lineY2, ptX2Ruler, ptBottomRight);
+        pin2.position.set(ptBottomRight.x, 12, ptBottomRight.z);
+        pin2.visible = true;
+        laserHead.position.set(ptBottomRight.x, 10, ptBottomRight.z);
+        playChime(987.77); // Si
+
+        const h = targetY2 - targetY1;
+        updateGpsBanner('4 / 5', `Nét 4: Mở rộng xuống đáy tới ${targetY2}px`, `ĐÃ CHẤM XONG GÓC DƯỚI - BÊN PHẢI: (${targetX2}, ${targetY2})! Chiều Cao = ${h}px!`, '⬇️');
+        document.getElementById('hudP2').innerText = `(${targetX2}, ${targetY2})`;
+        document.getElementById('hudH').innerText = `${h}px`;
+
+        log.innerHTML = `
+          <div class="text-gray-400">✓ BƯỚC 1-3: Đã có góc trên-trái và chiều rộng.</div>
+          <div class="text-yellow-400 font-bold">✓ BƯỚC 4: Đi xuống đáy Y2 = ${targetY2} ➔ CHẤM ĐƯỢC GÓC DƯỚI-PHẢI: (${targetX2}, ${targetY2})! Chiều Cao = ${targetY2} - ${targetY1} = ${h}px!</div>
+        `;
+      }
+      else if (step === 5) {
+        // Step 5: Full 3D Bounding Box Extruded
+        pin1.position.set(ptTopLeft.x, 12, ptTopLeft.z);
+        pin1.visible = true;
+        pin2.position.set(ptBottomRight.x, 12, ptBottomRight.z);
+        pin2.visible = true;
+
+        const w3D = Math.abs(ptBottomRight.x - ptTopLeft.x);
+        const d3D = Math.abs(ptBottomRight.z - ptTopLeft.z);
+        const h3D = 25;
+        const cX = (ptTopLeft.x + ptBottomRight.x) / 2;
+        const cZ = (ptTopLeft.z + ptBottomRight.z) / 2;
+        const cY = 4 + h3D / 2;
+
+        bBoxMesh.geometry.dispose();
+        bBoxMesh.geometry = new THREE.BoxGeometry(w3D, h3D, d3D);
+        bBoxMesh.position.set(cX, cY, cZ);
+        bBoxMesh.visible = true;
+
+        bBoxWire.geometry.dispose();
+        bBoxWire.geometry = new THREE.WireframeGeometry(new THREE.BoxGeometry(w3D, h3D, d3D));
+        bBoxWire.position.set(cX, cY, cZ);
+        bBoxWire.visible = true;
+
+        laserHead.position.set(cX, cY + h3D/2 + 8, cZ);
+        playChime(1046.5, 0.5); // High Do!
+
+        const w = targetX2 - targetX1;
+        const h = targetY2 - targetY1;
+
+        updateGpsBanner('5 / 5', `🎉 HOÀN THÀNH HỘP KHOANH LỖI!`, `Đã bao trọn vùng khuyết tật! Kích thước: ${w}px Rộng × ${h}px Cao. Hệ thống phán quyết: LỖI (NG)!`, '🎯');
+        document.getElementById('hudP1').innerText = `(${targetX1}, ${targetY1})`;
+        document.getElementById('hudP2').innerText = `(${targetX2}, ${targetY2})`;
+        document.getElementById('hudW').innerText = `${w}px`;
+        document.getElementById('hudH').innerText = `${h}px`;
+
+        log.innerHTML = `
+          <div class="text-emerald-400 font-bold">🎉 HOÀN THÀNH 100% QUY TRÌNH ĐO QUANG HỌC:</div>
+          <div class="text-cyan-300">📍 1. Góc Trên-Trái = (${targetX1}, ${targetY1})</div>
+          <div class="text-yellow-300">📍 2. Góc Dưới-Phải = (${targetX2}, ${targetY2})</div>
+          <div class="text-white font-bold">📐 3. Kích thước lỗi: Rộng ${w}px × Cao ${h}px.</div>
+        `;
+      }
+    }
+
+    function updateGpsBanner(stepText, title, detail, icon) {
+      document.getElementById('gpsStepBadge').innerText = `BƯỚC ${stepText}`;
+      document.getElementById('gpsTitle').innerText = title;
+      document.getElementById('gpsDetail').innerText = detail;
+      document.getElementById('gpsIcon').innerText = icon;
+    }
+
+    function nextStep() {
+      if (currentStep < 5) {
+        renderStep(currentStep + 1);
+      } else {
+        renderStep(1); // loop
+      }
+    }
+
+    function prevStep() {
+      if (currentStep > 1) {
+        renderStep(currentStep - 1);
+      } else {
+        renderStep(0);
+      }
+    }
+
+    function goToStep(s) {
+      stopAutoPlay();
+      renderStep(s);
+    }
+
+    function replayCurrentStep() {
+      renderStep(currentStep === 0 ? 1 : currentStep);
+    }
+
+    function toggleAutoPlay() {
+      const btn = document.getElementById('btnAutoPlay');
+      if (autoPlayTimer) {
+        stopAutoPlay();
+      } else {
+        btn.innerText = '⏸️ Tạm Dừng Tự Động';
+        btn.className = 'px-3 py-1.5 text-xs font-bold rounded-lg bg-amber-600 hover:bg-amber-500 text-white transition';
+        if (currentStep >= 5) renderStep(0);
+        autoPlayTimer = setInterval(() => {
+          if (currentStep < 5) {
+            renderStep(currentStep + 1);
+          } else {
+            stopAutoPlay();
+          }
+        }, 1800);
+      }
+    }
+
+    function stopAutoPlay() {
+      if (autoPlayTimer) {
+        clearInterval(autoPlayTimer);
+        autoPlayTimer = null;
+        const btn = document.getElementById('btnAutoPlay');
+        btn.innerText = '⚡ Tự Động Chạy Hết';
+        btn.className = 'px-3 py-1.5 text-xs font-bold rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white transition';
+      }
+    }
+
+    function applyPresetAndReset(x1, y1, x2, y2, desc) {
+      stopAutoPlay();
+      targetX1 = x1; targetY1 = y1; targetX2 = x2; targetY2 = y2;
+      renderStep(0);
+    }
+
+    function setCameraView(mode) {
+      if (mode === 'top') {
+        camera.position.set(0, 580, 0.01);
+        controls.target.set(0, 0, 0);
+      } else if (mode === 'iso') {
+        camera.position.set(280, 380, 360);
+        controls.target.set(0, 0, 0);
+      } else if (mode === 'defect') {
+        const p1 = pixelToWorld(targetX1, targetY1);
+        const p2 = pixelToWorld(targetX2, targetY2);
+        const cX = (p1.x + p2.x) / 2;
+        const cZ = (p1.z + p2.z) / 2;
+        camera.position.set(cX + 70, 90, cZ + 110);
+        controls.target.set(cX, 10, cZ);
+      }
+      controls.update();
+    }
+
+    function animate() {
+      requestAnimationFrame(animate);
+      controls.update();
+
+      // Pulsing effect for laser head
+      const time = Date.now() * 0.008;
+      const s = 1 + Math.sin(time) * 0.2;
+      laserHead.scale.set(s, s, s);
+
+      renderer.render(scene, camera);
+    }
+
+    window.addEventListener('resize', () => {
+      camera.aspect = container.clientWidth / container.clientHeight;
+      camera.updateProjectionMatrix();
+      renderer.setSize(container.clientWidth, container.clientHeight);
+    });
+
+    // Start at Step 0
+    renderStep(0);
+    animate();
+  </script>
+</body>
+</html>

@@ -132,5 +132,24 @@ Khi bất kỳ Agent nào (Antigravity, Hermes, v.v.) hỗ trợ User trong repo
   - 🧠 **Cột Mốc Tâm Lý Đột Phá (Breakthrough):**
     - Phá tan bẫy thao túng tâm lý (Gaslighting) của công ty cũ: Nhận diện rõ chiêu trò "hỏi vặt toán/thuật toán chay" để dìm lương nhân viên dù họ đã cống hiến hết mình.
     - Giải phóng vĩnh viễn nỗi sợ "thiếu kỹ năng giải quyết vấn đề", xác lập tư duy Kiến trúc sư Hệ thống (System Architect) chỉ huy máy tính làm toán thay vì tự ti vô nghĩa.
+  - ✅ **Hoàn thành Khảo sát Thị trường Tuyển dụng & Báo cáo Excel Hải Dương - Hưng Yên (2026-09-06):**
+    - Phân tích chi tiết các nhà máy FDI: UMC Việt Nam (KCN Tân Trường), Taishodo (KCN Đại An), Biel Crystal (Nam Sách), Hyundai Kefico (Đại An).
+    - Xuất báo cáo chuyên sâu: `docs/BAO_CAO_TUYEN_DUNG_VISION_CAM_GIANG_HAI_DUONG.xlsx`.
+  - ✅ **Hoàn thành Lab AI Anomaly Detection (PatchCore) & Vectorization Ma Trận (2026-09-07):**
+    - Xây dựng module `src/05_ai_anomaly_detector_interactive.py` và notebook `notebooks/05_ai_anomaly_detection_lab.ipynb`.
+    - Tải và xử lý tập dữ liệu thực tế DeepPCB: 50 ảnh chuẩn `train_good/`, 50 ảnh lỗi `test_defects/`, cùng file annotations tọa độ bounding box.
+    - Cắt ảnh thành lưới 400 patches ($32 \times 32\text{px}$), vector hóa 3072 chiều.
+    - Xây dựng Memory Bank 20.000 vectors đặc trưng từ tập ảnh OK.
+    - **Tối ưu hóa Vectorization đột phá:** Áp dụng hằng đẳng thức $(A-B)^2 = A^2 - 2AB + B^2$ với `np.dot(T, M.T)` $\to$ Giảm thời gian so sánh từ **$66.54\text{s}$ xuống còn $0.5\text{s}$ ($500\text{ms}$)** (tăng tốc gấp ~133 lần)!
+    - Tạo heatmap khuyết tật, overlay màu, phán quyết OK/NG chính xác điểm đứt mạch.
+  - ✅ **Giải mã Phần cứng Công nghiệp Cognex từ thực địa (2026-09-07):**
+    - Phân tích khóa cứng bản quyền **Cognex VisionPro MAX USB Dongle** (`VPRO-MAX-WB`, trị giá ~50–65 triệu VNĐ, chứa PatMax, LineMax, Caliper).
+    - Phân tích camera công nghiệp **Cognex Line Scan 4K** (`CAM-CIC-4KL-24-G`, trị giá ~100+ triệu VNĐ, chuẩn GigE Vision + Hirose Hardware Trigger).
+  - 🤝 **Đồng bộ Chiến lược Tuyển dụng với Kỹ sư R&D Vision Hoàng Quang Huy (2026-09-07):**
+    - Xác nhận phân vai rõ ràng: Kỹ sư CS làm R&D AI Vision & PC Control không cần đấu điện. Trọng tâm: Cam/Lens/Đèn + C# PC Control + TCP/IP Socket PLC + Classical CV (Alignment, Measurement, Matching) + AI (YOLO, MVTec AD Anomaly Detection).
+    - Nhắm mục tiêu: RTC Technology (Fresher 10–16tr) và các tập đoàn FDI tại Hải Dương - Hưng Yên.
+    - Quyết định tập kết toàn bộ di sản học thuật CS (Đồ án Kỹ sư Tài năng Big Data Fraud Detection) về cùng bản doanh để làm bàn đạp cho hồ sơ ứng tuyển AI Vision.
   - 🔄 **Kế hoạch tiếp theo (Khóa 2 - Industrial Deep Learning & AI Anomaly Detection):** 
-    - Triển khai mô hình AI Anomaly Detection (PatchCore / Autoencoder) bắt lỗi xước nano và tích hợp ONNX Runtime vào C# WPF.
+    - Bước 6: Kỹ thuật Industrial Alignment (ORB + RANSAC Homography) bẻ thẳng ảnh trước khi soi lỗi.
+    - Bước 7: Đánh giá định lượng toàn diện (AUROC, False Call Rate, Escape Rate, Confusion Matrix).
+    - Bước 8: Kết nối tập dữ liệu MVTec AD chuẩn quốc tế và tích hợp vào C# WPF.
