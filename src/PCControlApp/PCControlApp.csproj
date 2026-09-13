@@ -10,8 +10,10 @@
 
   <ItemGroup>
     <PackageReference Include="CommunityToolkit.Mvvm" Version="8.4.2" />
+    <PackageReference Include="Microsoft.ML.OnnxRuntime" Version="1.30.0" />
     <PackageReference Include="OpenCvSharp4" Version="4.13.0.20260627" />
     <PackageReference Include="OpenCvSharp4.runtime.win" Version="4.13.0.20260627" />
+    <PackageReference Include="WPF-UI" Version="4.3.0" />
   </ItemGroup>
 
 </Project>

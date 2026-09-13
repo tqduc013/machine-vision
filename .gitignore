@@ -17,6 +17,11 @@ venv/
 # Local crash logs
 *.log
 
-# Private Documents / Resumes
-documents/CV*.pdf
-documents/*CV*.pdf
+# Private Documents / Resumes / Reference CVs
+documents/
+docs/*CV*
+docs/*duc_cv*
+
+# Build outputs and published binaries
+publish/
+

@@ -1,281 +1,341 @@
-<Window x:Class="PCControlApp.MainWindow"
+<ui:FluentWindow x:Class="PCControlApp.MainWindow"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
         xmlns:vm="clr-namespace:PCControlApp.ViewModels"
         mc:Ignorable="d"
-        Title="AOI Machine Vision PC Controller - C# .NET 8 WPF Pro" 
-        Height="780" Width="1280"
-        MinHeight="700" MinWidth="1100"
+        Title="TQD-VISION • Trạm Kiểm Định Quang Học Đai Ốc - Kỹ Sư Trần Quang Đức" 
+        Height="840" Width="1360"
+        MinHeight="720" MinWidth="1180"
         WindowStartupLocation="CenterScreen"
-        Background="#050811" Foreground="#F8FAFC"
-        FontFamily="Segoe UI, Inter, Arial">
+        ExtendsContentIntoTitleBar="True"
+        WindowBackdropType="Mica"
+        Background="#0D1117" Foreground="#E6EDF3"
+        FontFamily="Segoe UI, -apple-system, Arial">
 
     <Window.DataContext>
         <vm:MainViewModel />
     </Window.DataContext>
 
-    <Window.Resources>
-        <!-- Card Style -->
-        <Style x:Key="GlassCard" TargetType="Border">
-            <Setter Property="Background" Value="#0F172A" />
-            <Setter Property="BorderBrush" Value="#1E293B" />
-            <Setter Property="BorderThickness" Value="1" />
-            <Setter Property="CornerRadius" Value="12" />
-            <Setter Property="Padding" Value="12" />
-        </Style>
-
-        <!-- Button Style -->
-        <Style x:Key="ModernBtn" TargetType="Button">
-            <Setter Property="Foreground" Value="White" />
-            <Setter Property="FontWeight" Value="Bold" />
-            <Setter Property="FontSize" Value="12" />
-            <Setter Property="Padding" Value="12,8" />
-            <Setter Property="Cursor" Value="Hand" />
-            <Setter Property="Template">
-                <Setter.Value>
-                    <ControlTemplate TargetType="Button">
-                        <Border Background="{TemplateBinding Background}" 
-                                BorderBrush="{TemplateBinding BorderBrush}" 
-                                BorderThickness="{TemplateBinding BorderThickness}" 
-                                CornerRadius="8">
-                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" />
-                        </Border>
-                    </ControlTemplate>
-                </Setter.Value>
-            </Setter>
-        </Style>
-    </Window.Resources>
-
-    <Grid Margin="12">
+    <Grid Margin="16,0,16,12">
         <Grid.RowDefinitions>
-            <RowDefinition Height="Auto" /> <!-- Header -->
-            <RowDefinition Height="*" />    <!-- Main Body -->
-            <RowDefinition Height="Auto" /> <!-- Architecture Footer -->
+            <RowDefinition Height="Auto" /> <!-- 0. Windows 11 TitleBar -->
+            <RowDefinition Height="Auto" /> <!-- 1. Header Bar -->
+            <RowDefinition Height="Auto" /> <!-- 2. Controls Toolbar -->
+            <RowDefinition Height="*" />    <!-- 3. Main Workspace -->
+            <RowDefinition Height="Auto" /> <!-- 4. Engineering Footer -->
         </Grid.RowDefinitions>
 
-        <!-- 1. TOP HEADER BAR -->
-        <Border Grid.Row="0" Style="{StaticResource GlassCard}" Margin="0,0,0,10" Padding="12,8">
+        <!-- 0. NATIVE WINDOWS 11 TITLEBAR -->
+        <ui:TitleBar Grid.Row="0" Margin="-16,0,-16,4"
+                     Title="TQD-VISION • HỆ THỐNG KIỂM ĐỊNH QUANG HỌC CHÍNH XÁC (AOI) - KEFICO SPEC" />
+
+        <!-- 1. ENGINEERING BRANDING HEADER -->
+        <ui:Card Grid.Row="1" Margin="0,0,0,10" Padding="14,10">
             <Grid>
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="*" />
                     <ColumnDefinition Width="Auto" />
                 </Grid.ColumnDefinitions>
 
+                <!-- Left: Engineer & Station Branding -->
                 <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
-                    <Border Background="#0284C7" CornerRadius="8" Width="36" Height="36" Margin="0,0,10,0">
-                        <TextBlock Text="C#" Foreground="White" FontWeight="Black" FontSize="16" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                    <Border Background="#1E293B" BorderBrush="#38BDF8" BorderThickness="1.5" CornerRadius="8" Width="44" Height="44" Margin="0,0,12,0">
+                        <TextBlock Text="TQD" Foreground="#38BDF8" FontWeight="Black" FontSize="15" HorizontalAlignment="Center" VerticalAlignment="Center" />
                     </Border>
-                    <StackPanel>
+                    <StackPanel VerticalAlignment="Center">
                         <StackPanel Orientation="Horizontal">
-                            <TextBlock Text="AOI PC CONTROLLER" FontWeight="Black" FontSize="16" Foreground="White" />
-                            <Border Background="#1E3A8A" CornerRadius="4" Padding="6,2" Margin="8,0,8,0">
-                                <TextBlock Text=".NET 8 WPF PRO" Foreground="#38BDF8" FontSize="10" FontWeight="Bold" />
-                            </Border>
-                            <Border Background="#064E3B" CornerRadius="10" Padding="8,2">
-                                <TextBlock Text="● IPC ONLINE 24/7" Foreground="#34D399" FontSize="10" FontWeight="Bold" />
-                            </Border>
+                            <TextBlock Text="HỆ THỐNG KIỂM ĐỊNH QUANG HỌC ĐAI ỐC CÔNG NGHIỆP" FontWeight="Bold" FontSize="16" Foreground="#F0F6FC" />
+                            <ui:Badge Appearance="Success" Margin="10,0,0,0" VerticalAlignment="Center">
+                                <TextBlock Text="IPC ONLINE 24/7" FontSize="9" FontWeight="Bold" />
+                            </ui:Badge>
                         </StackPanel>
-                        <TextBlock Text="Trạm kiểm tra ngoại quan chip Apple A18 • Xử lý đa luồng OpenCvSharp" FontSize="11" Foreground="#94A3B8" />
+                        <TextBlock Text="Kỹ sư phát triển: Trần Quang Đức • Khoa học Máy tính (Lớp Kỹ sư Tài năng UTEHY)" FontSize="11" Foreground="#8B949E" Margin="0,3,0,0" />
                     </StackPanel>
                 </StackPanel>
 
-                <!-- System Info Badges -->
+                <!-- Right: Station Hardware Badges -->
                 <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
-                    <Border Background="#0B0F19" BorderBrush="#1E293B" BorderThickness="1" CornerRadius="6" Padding="8,4" Margin="4,0">
+                    <Border Background="#161B22" BorderBrush="#30363D" BorderThickness="1" CornerRadius="6" Padding="10,5" Margin="4,0">
                         <StackPanel>
-                            <TextBlock Text="CAMERA:" FontSize="8" Foreground="#64748B" />
-                            <TextBlock Text="Basler acA2440 (5MP)" FontSize="10" FontWeight="Bold" Foreground="#34D399" />
+                            <TextBlock Text="TRẠM SẢN XUẤT" FontSize="8" Foreground="#8B949E" FontWeight="Bold" />
+                            <TextBlock Text="LINE 01 (KEFICO-SPEC)" FontSize="11" FontWeight="Bold" Foreground="#58A6FF" />
                         </StackPanel>
                     </Border>
-                    <Border Background="#0B0F19" BorderBrush="#1E293B" BorderThickness="1" CornerRadius="6" Padding="8,4" Margin="4,0">
+                    <Border Background="#161B22" BorderBrush="#30363D" BorderThickness="1" CornerRadius="6" Padding="10,5" Margin="4,0">
                         <StackPanel>
-                            <TextBlock Text="PLC PROTOCOL:" FontSize="8" Foreground="#64748B" />
-                            <TextBlock Text="Modbus / Socket :5000" FontSize="10" FontWeight="Bold" Foreground="#38BDF8" />
+                            <TextBlock Text="CAMERA QUANG HỌC" FontSize="8" Foreground="#8B949E" FontWeight="Bold" />
+                            <TextBlock Text="Basler acA2440 (GigE Vision)" FontSize="11" FontWeight="Bold" Foreground="#3FB950" />
+                        </StackPanel>
+                    </Border>
+                    <Border Background="#161B22" BorderBrush="#30363D" BorderThickness="1" CornerRadius="6" Padding="10,5" Margin="4,0">
+                        <StackPanel>
+                            <TextBlock Text="GIAO THỨC PLC" FontSize="8" Foreground="#8B949E" FontWeight="Bold" />
+                            <TextBlock Text="Socket TCP/IP :5000" FontSize="11" FontWeight="Bold" Foreground="#D29922" />
                         </StackPanel>
                     </Border>
                 </StackPanel>
             </Grid>
-        </Border>
+        </ui:Card>
 
-        <!-- 2. MAIN BODY GRID (7 Cols Left / 5 Cols Right) -->
-        <Grid Grid.Row="1">
+        <!-- 2. WORKSPACE CONTROLS TOOLBAR -->
+        <ui:Card Grid.Row="2" Margin="0,0,0,10" Padding="12,8">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+
+                <!-- Left: Method Switcher -->
+                <StackPanel Grid.Column="0" Orientation="Horizontal" VerticalAlignment="Center">
+                    <TextBlock Text="Phương pháp thị giác:" FontSize="12" Foreground="#8B949E" VerticalAlignment="Center" Margin="0,0,10,0" />
+                    <ui:Button Content="{Binding ModeButtonText}" 
+                               Appearance="Secondary"
+                               Icon="{ui:SymbolIcon Symbol=ArrowRepeatAll24}"
+                               Command="{Binding ToggleAlgorithmModeCommand}" />
+                    <Border Background="#1C2128" BorderBrush="#388BFD" BorderThickness="1" CornerRadius="6" Padding="10,4" Margin="10,0,0,0">
+                        <TextBlock Text="{Binding CurrentModeName, StringFormat='Đang áp dụng: {0}'}" FontSize="12" FontWeight="SemiBold" Foreground="#58A6FF" />
+                    </Border>
+                </StackPanel>
+
+                <!-- Right: Action Buttons -->
+                <StackPanel Grid.Column="2" Orientation="Horizontal">
+                    <ui:Button Content="Kích hoạt chụp (Trigger)" 
+                               Appearance="Primary"
+                               Icon="{ui:SymbolIcon Symbol=Camera24}"
+                               Margin="0,0,8,0"
+                               Command="{Binding TriggerInspectionCommand}" />
+
+                    <ui:Button Content="{Binding AutoRunButtonText}" 
+                               Appearance="Success"
+                               Icon="{ui:SymbolIcon Symbol=Play24}"
+                               Margin="0,0,8,0"
+                               Command="{Binding ToggleAutoRunCommand}" />
+
+                    <ui:Button Content="Đặt lại bộ đếm" 
+                               Appearance="Secondary"
+                               Icon="{ui:SymbolIcon Symbol=ArrowReset24}"
+                               Command="{Binding ResetStatsCommand}" />
+                </StackPanel>
+            </Grid>
+        </ui:Card>
+
+        <!-- 3. MAIN WORKSPACE (Split 60% Left / 40% Right) -->
+        <Grid Grid.Row="3">
             <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="7*" />
-                <ColumnDefinition Width="5*" />
+                <ColumnDefinition Width="6*" />
+                <ColumnDefinition Width="4*" />
             </Grid.ColumnDefinitions>
 
-            <!-- LEFT COLUMN: Controls & Camera Feed -->
-            <Grid Grid.Column="0" Margin="0,0,6,0">
-                <Grid.RowDefinitions>
-                    <RowDefinition Height="Auto" />
-                    <RowDefinition Height="*" />
-                </Grid.RowDefinitions>
+            <!-- LEFT COLUMN: Optical Camera Viewport -->
+            <ui:Card Grid.Column="0" Margin="0,0,6,0" Padding="4">
+                <Grid Background="#0A0C10" ClipToBounds="True">
+                    <Image Source="{Binding DisplayImage}" Stretch="Uniform" />
 
-                <!-- Controls Bar -->
-                <Border Grid.Row="0" Style="{StaticResource GlassCard}" Margin="0,0,0,10" Padding="8">
-                    <Grid>
-                        <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="*" />
-                            <ColumnDefinition Width="*" />
-                            <ColumnDefinition Width="Auto" />
-                        </Grid.ColumnDefinitions>
-
-                        <Button Grid.Column="0" Content="⚡ BẤM TRIGGER (C# OPENCV)" 
-                                Style="{StaticResource ModernBtn}" 
-                                Background="#0284C7" Margin="0,0,4,0"
-                                Command="{Binding TriggerInspectionCommand}" />
-
-                        <Button Grid.Column="1" Content="{Binding AutoRunButtonText}" 
-                                Style="{StaticResource ModernBtn}" 
-                                Background="#059669" Margin="4,0,4,0"
-                                Command="{Binding ToggleAutoRunCommand}" />
-
-                        <Button Grid.Column="2" Content="🔄 Reset Ca" 
-                                Style="{StaticResource ModernBtn}" 
-                                Background="#1E293B" BorderBrush="#334155" BorderThickness="1"
-                                Command="{Binding ResetStatsCommand}" />
-                    </Grid>
-                </Border>
-
-                <!-- Camera Viewport Box -->
-                <Border Grid.Row="1" Background="#020617" BorderBrush="#1E293B" BorderThickness="1" CornerRadius="12" ClipToBounds="True">
-                    <Grid>
-                        <Image Source="{Binding DisplayImage}" Stretch="Uniform" />
-
-                        <!-- Watermark HUD -->
-                        <Border Background="#CC000000" CornerRadius="6" HorizontalAlignment="Left" VerticalAlignment="Bottom" Margin="10" Padding="8,4">
-                            <StackPanel Orientation="Horizontal">
-                                <TextBlock Text="ALGO: 4G PIPELINE (C#)" Foreground="#38BDF8" FontSize="10" FontWeight="Bold" Margin="0,0,8,0" />
-                                <TextBlock Text="|" Foreground="#475569" Margin="0,0,8,0" />
-                                <TextBlock Text="RES: 2448x2048" Foreground="#94A3B8" FontSize="10" Margin="0,0,8,0" />
-                                <TextBlock Text="|" Foreground="#475569" Margin="0,0,8,0" />
-                                <TextBlock Text="GÓC XOAY θ: " Foreground="#94A3B8" FontSize="10" />
-                                <TextBlock Text="{Binding CurrentResult.Angle, StringFormat='{}{0}°'}" Foreground="#F59E0B" FontSize="10" FontWeight="Bold" />
-                            </StackPanel>
-                        </Border>
-                    </Grid>
-                </Border>
-            </Grid>
-
-            <!-- RIGHT COLUMN: Verdict & Real-Time Stats -->
-            <Grid Grid.Column="1" Margin="6,0,0,0">
-                <Grid.RowDefinitions>
-                    <RowDefinition Height="Auto" /> <!-- Verdict Box -->
-                    <RowDefinition Height="Auto" /> <!-- KPI Cards -->
-                    <RowDefinition Height="Auto" /> <!-- Cycle Time -->
-                    <RowDefinition Height="*" />    <!-- PLC Logs -->
-                </Grid.RowDefinitions>
-
-                <!-- Big Verdict Box -->
-                <Border Grid.Row="0" CornerRadius="12" BorderThickness="2" BorderBrush="{Binding CurrentResult.StatusColor}" Margin="0,0,0,8" Padding="14">
-                    <Border.Background>
-                        <SolidColorBrush Color="#0B132B" Opacity="0.9" />
-                    </Border.Background>
-                    <StackPanel HorizontalAlignment="Center">
-                        <TextBlock Text="{Binding CurrentResult.VerdictText}" 
-                                   FontSize="28" FontWeight="Black" HorizontalAlignment="Center"
-                                   Foreground="{Binding CurrentResult.StatusColor}" />
-                        <TextBlock Text="{Binding CurrentResult.DefectReason, StringFormat='Trạng thái: {0}'}" 
-                                   FontSize="11" Foreground="#94A3B8" HorizontalAlignment="Center" Margin="0,4,0,0" />
-                        <TextBlock Text="{Binding CurrentResult.SerialNumber, StringFormat='Serial: {0}'}" 
-                                   FontSize="10" Foreground="#64748B" HorizontalAlignment="Center" Margin="0,2,0,0" />
-                    </StackPanel>
-                </Border>
-
-                <!-- KPI Cards Grid -->
-                <Grid Grid.Row="1" Margin="0,0,0,8">
-                    <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="*" />
-                        <ColumnDefinition Width="*" />
-                    </Grid.ColumnDefinitions>
-                    <Grid.RowDefinitions>
-                        <RowDefinition Height="Auto" />
-                        <RowDefinition Height="Auto" />
-                    </Grid.RowDefinitions>
-
-                    <!-- Total -->
-                    <Border Grid.Row="0" Grid.Column="0" Style="{StaticResource GlassCard}" Margin="0,0,4,4">
-                        <StackPanel>
-                            <TextBlock Text="TỔNG SỐ LƯỢNG" FontSize="9" Foreground="#94A3B8" FontWeight="Bold" />
-                            <TextBlock Text="{Binding TotalCount}" FontSize="20" FontWeight="Black" Foreground="White" />
+                    <!-- Top Stream Pill -->
+                    <Border Background="#CC000000" CornerRadius="4" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="10" Padding="10,5">
+                        <StackPanel Orientation="Horizontal">
+                            <Ellipse Width="6" Height="6" Fill="#3FB950" Margin="0,0,6,0" VerticalAlignment="Center" />
+                            <TextBlock Text="ẢNH THỰC ĐỊA • MVTec Metal Nut • Cảm biến 2448 × 2048 px" Foreground="#C9D1D9" FontSize="11" FontWeight="SemiBold" />
                         </StackPanel>
                     </Border>
 
-                    <!-- Yield Rate -->
-                    <Border Grid.Row="0" Grid.Column="1" Style="{StaticResource GlassCard}" Margin="4,0,0,4">
-                        <StackPanel>
-                            <TextBlock Text="TỶ LỆ ĐẠT (YIELD)" FontSize="9" Foreground="#94A3B8" FontWeight="Bold" />
-                            <TextBlock Text="{Binding YieldRate}" FontSize="20" FontWeight="Black" Foreground="{Binding YieldRateColor}" />
-                        </StackPanel>
-                    </Border>
-
-                    <!-- OK Count -->
-                    <Border Grid.Row="1" Grid.Column="0" Style="{StaticResource GlassCard}" Margin="0,4,4,0">
-                        <StackPanel>
-                            <TextBlock Text="HÀNG ĐẠT (OK)" FontSize="9" Foreground="#34D399" FontWeight="Bold" />
-                            <TextBlock Text="{Binding OkCount}" FontSize="18" FontWeight="Bold" Foreground="#34D399" />
-                        </StackPanel>
-                    </Border>
-
-                    <!-- NG Count -->
-                    <Border Grid.Row="1" Grid.Column="1" Style="{StaticResource GlassCard}" Margin="4,4,0,0">
-                        <StackPanel>
-                            <TextBlock Text="HÀNG LỖI (NG)" FontSize="9" Foreground="#F87171" FontWeight="Bold" />
-                            <TextBlock Text="{Binding NgCount}" FontSize="18" FontWeight="Bold" Foreground="#F87171" />
+                    <!-- Bottom Status Pill -->
+                    <Border Background="#CC000000" CornerRadius="4" HorizontalAlignment="Left" VerticalAlignment="Bottom" Margin="10" Padding="10,5">
+                        <StackPanel Orientation="Horizontal">
+                            <TextBlock Text="Góc xoay: " Foreground="#8B949E" FontSize="11" />
+                            <TextBlock Text="{Binding CurrentResult.Angle, StringFormat='{}{0}°'}" Foreground="#D29922" FontSize="11" FontWeight="Bold" Margin="0,0,12,0" />
+                            <TextBlock Text="Chu kỳ quét: " Foreground="#8B949E" FontSize="11" />
+                            <TextBlock Text="{Binding CurrentResult.CycleTimeMs, StringFormat='{}{0:F1} ms'}" Foreground="#58A6FF" FontSize="11" FontWeight="Bold" />
                         </StackPanel>
                     </Border>
                 </Grid>
+            </ui:Card>
 
-                <!-- Cycle Time & Specs -->
-                <Border Grid.Row="2" Style="{StaticResource GlassCard}" Margin="0,0,0,8" Padding="10,6">
+            <!-- RIGHT COLUMN: Engineering Quality Dashboard -->
+            <Grid Grid.Column="1" Margin="6,0,0,0">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto" /> <!-- Card 1: Verdict -->
+                    <RowDefinition Height="Auto" /> <!-- Card 2: QA Data Table -->
+                    <RowDefinition Height="Auto" /> <!-- Card 3: Production KPI -->
+                    <RowDefinition Height="*" />    <!-- Card 4: PLC Terminal -->
+                </Grid.RowDefinitions>
+
+                <!-- Card 1: Fluent Industrial Verdict Card -->
+                <ui:Card Grid.Row="0" Margin="0,0,0,8" Padding="14,12">
+                    <ui:Card.Style>
+                        <Style TargetType="ui:Card">
+                            <Setter Property="Background" Value="#0D2818" />
+                            <Setter Property="BorderBrush" Value="#238636" />
+                            <Style.Triggers>
+                                <DataTrigger Binding="{Binding CurrentResult.IsOk}" Value="False">
+                                    <Setter Property="Background" Value="#381014" />
+                                    <Setter Property="BorderBrush" Value="#DA3633" />
+                                </DataTrigger>
+                            </Style.Triggers>
+                        </Style>
+                    </ui:Card.Style>
                     <Grid>
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="*" />
-                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" />
                         </Grid.ColumnDefinitions>
-                        <StackPanel Grid.Column="0">
-                            <TextBlock Text="CYCLE TIME:" FontSize="8" Foreground="#64748B" />
-                            <TextBlock Text="{Binding CurrentResult.CycleTimeMs, StringFormat='{}{0:F2} ms'}" FontSize="13" FontWeight="Bold" Foreground="#38BDF8" />
+                        <StackPanel>
+                            <TextBlock Text="{Binding CurrentResult.VerdictText}" FontSize="18" FontWeight="Black" Foreground="White" />
+                            <TextBlock Text="{Binding CurrentResult.DefectReason, StringFormat='Chi tiết kỹ thuật: {0}'}" FontSize="12" Foreground="#F0F6FC" Margin="0,4,0,0" />
                         </StackPanel>
-                        <StackPanel Grid.Column="1" HorizontalAlignment="Right">
-                            <TextBlock Text="KÍCH THƯỚC ĐO:" FontSize="8" Foreground="#64748B" />
-                            <TextBlock FontSize="12" FontWeight="Bold" Foreground="#F59E0B">
-                                <Run Text="{Binding CurrentResult.Width}" /> x <Run Text="{Binding CurrentResult.Height}" /> px
-                            </TextBlock>
-                        </StackPanel>
+                        <TextBlock Grid.Column="1" Text="{Binding CurrentResult.SerialNumber}" FontSize="11" Foreground="#8B949E" VerticalAlignment="Top" FontWeight="SemiBold" />
                     </Grid>
-                </Border>
+                </ui:Card>
 
-                <!-- PLC Handshake Log Terminal -->
-                <Border Grid.Row="3" Background="#020617" BorderBrush="#1E293B" BorderThickness="1" CornerRadius="10" Padding="8">
+                <!-- Card 2: Quality Inspection Data Table (Bảng đo kích thước & Dung sai) -->
+                <ui:Card Grid.Row="1" Margin="0,0,0,8" Padding="12,10">
+                    <StackPanel>
+                        <TextBlock Text="BẢNG ĐO KIỂM QUANG HỌC &amp; DUNG SAI (QC TABLE)" FontSize="11" FontWeight="Bold" Foreground="#8B949E" Margin="0,0,0,8" />
+
+                        <!-- Table Header -->
+                        <Grid Margin="0,0,0,6">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="2.4*" />
+                                <ColumnDefinition Width="1.5*" />
+                                <ColumnDefinition Width="1.5*" />
+                                <ColumnDefinition Width="1.2*" />
+                            </Grid.ColumnDefinitions>
+                            <TextBlock Grid.Column="0" Text="HẠNG MỤC" FontSize="10" FontWeight="Bold" Foreground="#8B949E" />
+                            <TextBlock Grid.Column="1" Text="DUNG SAI" FontSize="10" FontWeight="Bold" Foreground="#8B949E" HorizontalAlignment="Right" />
+                            <TextBlock Grid.Column="2" Text="THỰC ĐO" FontSize="10" FontWeight="Bold" Foreground="#8B949E" HorizontalAlignment="Right" />
+                            <TextBlock Grid.Column="3" Text="KẾT QUẢ" FontSize="10" FontWeight="Bold" Foreground="#8B949E" HorizontalAlignment="Center" />
+                        </Grid>
+                        <Separator Background="#21262D" Margin="0,0,0,8" />
+
+                        <!-- Row 1: Din -->
+                        <Grid Margin="0,3">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="2.4*" />
+                                <ColumnDefinition Width="1.5*" />
+                                <ColumnDefinition Width="1.5*" />
+                                <ColumnDefinition Width="1.2*" />
+                            </Grid.ColumnDefinitions>
+                            <TextBlock Grid.Column="0" Text="Đường kính trong (Din)" FontSize="12" Foreground="#E6EDF3" />
+                            <TextBlock Grid.Column="1" Text="140.0 - 182.0 px" FontSize="11" Foreground="#8B949E" HorizontalAlignment="Right" />
+                            <TextBlock Grid.Column="2" Text="{Binding CurrentResult.InnerDiameter, StringFormat='{}{0:F1} px'}" FontSize="12" FontWeight="Bold" Foreground="#D29922" HorizontalAlignment="Right" />
+                            <ui:Badge Grid.Column="3" Appearance="Success" HorizontalAlignment="Center">
+                                <TextBlock Text="ĐẠT" FontSize="9" FontWeight="Bold" />
+                            </ui:Badge>
+                        </Grid>
+
+                        <!-- Row 2: Dout -->
+                        <Grid Margin="0,3">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="2.4*" />
+                                <ColumnDefinition Width="1.5*" />
+                                <ColumnDefinition Width="1.5*" />
+                                <ColumnDefinition Width="1.2*" />
+                            </Grid.ColumnDefinitions>
+                            <TextBlock Grid.Column="0" Text="Đường kính ngoài (Dout)" FontSize="12" Foreground="#E6EDF3" />
+                            <TextBlock Grid.Column="1" Text="605.0 - 658.0 px" FontSize="11" Foreground="#8B949E" HorizontalAlignment="Right" />
+                            <TextBlock Grid.Column="2" Text="{Binding CurrentResult.OuterDiameter, StringFormat='{}{0:F1} px'}" FontSize="12" FontWeight="Bold" Foreground="#D29922" HorizontalAlignment="Right" />
+                            <ui:Badge Grid.Column="3" Appearance="Success" HorizontalAlignment="Center">
+                                <TextBlock Text="ĐẠT" FontSize="9" FontWeight="Bold" />
+                            </ui:Badge>
+                        </Grid>
+
+                        <!-- Row 3: Anomaly Score -->
+                        <Grid Margin="0,3">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="2.4*" />
+                                <ColumnDefinition Width="1.5*" />
+                                <ColumnDefinition Width="1.5*" />
+                                <ColumnDefinition Width="1.2*" />
+                            </Grid.ColumnDefinitions>
+                            <TextBlock Grid.Column="0" Text="Điểm bất thường AI" FontSize="12" Foreground="#E6EDF3" />
+                            <TextBlock Grid.Column="1" Text="&lt; 0.645" FontSize="11" Foreground="#8B949E" HorizontalAlignment="Right" />
+                            <TextBlock Grid.Column="2" Text="{Binding CurrentResult.AnomalyScore, StringFormat='{}{0:F3}'}" FontSize="12" FontWeight="Bold" Foreground="#F85149" HorizontalAlignment="Right" />
+                            <ui:Badge Grid.Column="3" Appearance="Info" HorizontalAlignment="Center">
+                                <TextBlock Text="GIÁM SÁT" FontSize="9" FontWeight="Bold" />
+                            </ui:Badge>
+                        </Grid>
+                    </StackPanel>
+                </ui:Card>
+
+                <!-- Card 3: Production Yield Counters (4 Tiles) -->
+                <Grid Grid.Row="2" Margin="0,0,0,8">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="*" />
+                    </Grid.ColumnDefinitions>
+
+                    <ui:Card Grid.Column="0" Margin="0,0,3,0" Padding="10,8">
+                        <StackPanel>
+                            <TextBlock Text="TỔNG SẢN PHẨM" FontSize="9" Foreground="#8B949E" FontWeight="Bold" />
+                            <TextBlock Text="{Binding TotalCount}" FontSize="18" FontWeight="Black" Foreground="White" />
+                        </StackPanel>
+                    </ui:Card>
+
+                    <ui:Card Grid.Column="1" Margin="3,0,3,0" Padding="10,8">
+                        <StackPanel>
+                            <TextBlock Text="TỶ LỆ ĐẠT (YIELD)" FontSize="9" Foreground="#8B949E" FontWeight="Bold" />
+                            <TextBlock Text="{Binding YieldRate}" FontSize="18" FontWeight="Black" Foreground="{Binding YieldRateColor}" />
+                        </StackPanel>
+                    </ui:Card>
+
+                    <ui:Card Grid.Column="2" Margin="3,0,3,0" Padding="10,8">
+                        <StackPanel>
+                            <TextBlock Text="HÀNG ĐẠT (OK)" FontSize="9" Foreground="#3FB950" FontWeight="Bold" />
+                            <TextBlock Text="{Binding OkCount}" FontSize="18" FontWeight="Black" Foreground="#3FB950" />
+                        </StackPanel>
+                    </ui:Card>
+
+                    <ui:Card Grid.Column="3" Margin="3,0,0,0" Padding="10,8">
+                        <StackPanel>
+                            <TextBlock Text="HÀNG LỖI (NG)" FontSize="9" Foreground="#F85149" FontWeight="Bold" />
+                            <TextBlock Text="{Binding NgCount}" FontSize="18" FontWeight="Black" Foreground="#F85149" />
+                        </StackPanel>
+                    </ui:Card>
+                </Grid>
+
+                <!-- Card 4: Industrial PLC Communication Log -->
+                <ui:Card Grid.Row="3" Padding="12,10">
                     <Grid>
                         <Grid.RowDefinitions>
                             <RowDefinition Height="Auto" />
                             <RowDefinition Height="*" />
                         </Grid.RowDefinitions>
-                        <TextBlock Grid.Row="0" Text="PLC HANDSHAKE LOG (C# MULTI-THREAD)" FontSize="10" FontWeight="Bold" Foreground="#94A3B8" Margin="0,0,0,4" />
-                        <ListBox Grid.Row="1" ItemsSource="{Binding PlcLogs}" Background="Transparent" BorderThickness="0" Foreground="#38BDF8" FontSize="10" FontFamily="Consolas, JetBrains Mono" />
+                        <StackPanel Grid.Row="0" Orientation="Horizontal" Margin="0,0,0,6">
+                            <TextBlock Text="NHẬT KÝ BẮT TAY PLC (SOCKET TCP/IP :5000)" FontSize="11" FontWeight="Bold" Foreground="#8B949E" />
+                            <TextBlock Text="• TÍN HIỆU: Y0 (PASS) / Y1 (LOẠI BỎ)" FontSize="10" Foreground="#6E7681" Margin="12,0,0,0" />
+                        </StackPanel>
+
+                        <ListBox Grid.Row="1" ItemsSource="{Binding PlcLogs}" 
+                                 Background="Transparent" BorderThickness="0"
+                                 ScrollViewer.HorizontalScrollBarVisibility="Disabled"
+                                 FontFamily="Consolas, monospace" FontSize="11" Foreground="#C9D1D9">
+                            <ListBox.ItemTemplate>
+                                <DataTemplate>
+                                    <TextBlock Text="{Binding}" Margin="0,2" TextWrapping="Wrap" />
+                                </DataTemplate>
+                            </ListBox.ItemTemplate>
+                        </ListBox>
                     </Grid>
-                </Border>
+                </ui:Card>
             </Grid>
         </Grid>
 
-        <!-- 3. BOTTOM 4-LAYER ARCHITECTURE BANNER -->
-        <Border Grid.Row="2" Style="{StaticResource GlassCard}" Margin="0,10,0,0" Padding="10,6">
+        <!-- 4. ENGINEERING FOOTER -->
+        <Border Grid.Row="4" Margin="0,10,0,0">
             <Grid>
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="*" />
-                    <ColumnDefinition Width="*" />
-                    <ColumnDefinition Width="*" />
-                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="Auto" />
                 </Grid.ColumnDefinitions>
-                <TextBlock Grid.Column="0" Text="1. CAMERA ACQUISITION" Foreground="#38BDF8" FontSize="9" FontWeight="Bold" HorizontalAlignment="Center" />
-                <TextBlock Grid.Column="1" Text="2. OPENCVSHARP 4G POOL" Foreground="#34D399" FontSize="9" FontWeight="Bold" HorizontalAlignment="Center" />
-                <TextBlock Grid.Column="2" Text="3. PLC SOCKET I/O" Foreground="#F59E0B" FontSize="9" FontWeight="Bold" HorizontalAlignment="Center" />
-                <TextBlock Grid.Column="3" Text="4. WPF MVVM UI" Foreground="#A855F7" FontSize="9" FontWeight="Bold" HorizontalAlignment="Center" />
+                <TextBlock Text="Bản quyền kỹ thuật: Kỹ sư Trần Quang Đức • Computer Science UTEHY • Sẵn sàng triển khai dây chuyền FDI" FontSize="11" Foreground="#8B949E" VerticalAlignment="Center" />
+                <TextBlock Grid.Column="1" Text="KIẾN TRÚC: C# .NET 8 WPF • WPF-UI (Windows 11 Fluent Design) • OpenCvSharp4 • OnnxRuntime" FontSize="11" Foreground="#6E7681" VerticalAlignment="Center" />
             </Grid>
         </Border>
     </Grid>
-</Window>
+</ui:FluentWindow>

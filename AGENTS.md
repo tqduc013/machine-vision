@@ -149,7 +149,18 @@ Khi bất kỳ Agent nào (Antigravity, Hermes, v.v.) hỗ trợ User trong repo
     - Xác nhận phân vai rõ ràng: Kỹ sư CS làm R&D AI Vision & PC Control không cần đấu điện. Trọng tâm: Cam/Lens/Đèn + C# PC Control + TCP/IP Socket PLC + Classical CV (Alignment, Measurement, Matching) + AI (YOLO, MVTec AD Anomaly Detection).
     - Nhắm mục tiêu: RTC Technology (Fresher 10–16tr) và các tập đoàn FDI tại Hải Dương - Hưng Yên.
     - Quyết định tập kết toàn bộ di sản học thuật CS (Đồ án Kỹ sư Tài năng Big Data Fraud Detection) về cùng bản doanh để làm bàn đạp cho hồ sơ ứng tuyển AI Vision.
-  - 🔄 **Kế hoạch tiếp theo (Khóa 2 - Industrial Deep Learning & AI Anomaly Detection):** 
-    - Bước 6: Kỹ thuật Industrial Alignment (ORB + RANSAC Homography) bẻ thẳng ảnh trước khi soi lỗi.
-    - Bước 7: Đánh giá định lượng toàn diện (AUROC, False Call Rate, Escape Rate, Confusion Matrix).
-    - Bước 8: Kết nối tập dữ liệu MVTec AD chuẩn quốc tế và tích hợp vào C# WPF.
+  - ✅ **Hoàn thành Tích hợp MVTec AD Metal Nut & Deep Learning ONNX vào C# WPF (2026-09-13):**
+    - Nghiên cứu tập dữ liệu chuẩn quốc tế MVTec AD Metal Nut (95 ảnh công nghiệp: Good, Scratch, Bent, Color, Flip).
+    - Xuất mô hình `models/patchcore_net.onnx` và 1.500 golden feature vectors `models/memory_bank.bin`.
+    - Xây dựng `OnnxAnomalyInspector.cs` chạy trực tiếp ONNX Runtime C# kết hợp OpenCvSharp4, tính khoảng cách Euclidean đa chiều sinh Heatmap lỗi khoanh vùng trực quan.
+  - ✅ **Thiết kế Giao diện Công nghiệp Windows 11 Fluent Design (WPF-UI):**
+    - Nâng cấp `PCControlApp` với thư viện `WPF-UI` (Lepo.Wpf.Ui) cao cấp.
+    - Loại bỏ triệt để các phong cách "AI đồ chơi/cyberpunk" lòe loẹt; cá nhân hóa nhận diện kỹ sư CS Trần Quang Đức: Monogram `[ TQD ]`, trạm kiểm định `LINE 01 KEFICO-SPEC`, bảng dung sai QA/QC Micrometer, 4 thẻ KPI dây chuyền và Terminal Socket PLC.
+  - ✅ **Hoàn thành Sát Hạch Chịu Tải 2.000 Chu Kỳ & Bằng Chứng Zero Memory Leak (2026-09-13):**
+    - Xây dựng và thực thi suite `src/VisionBenchmark/Program.cs`.
+    - Hoàn thành 2.000 chu kỳ liên tục trong 61.98s, thông lượng 32.3 FPS (~1.936 sản phẩm/phút), độ trễ trung bình 30.96ms, P99 đạt 41.50ms an toàn tuyệt đối cho xung nhịp PLC.
+    - **Chứng minh toán học Zero Memory Leak:** RAM đi ngang phẳng tuyệt đối ở ~59 MB (chênh lệch giữa chu kỳ 500 và 2000 là -0.82 MB), Gen 2 GC chỉ kích hoạt đúng 1 lần duy nhất. Báo cáo lưu tại `docs/STRESS_TEST_REPORT.md`.
+  - 🔄 **Kế hoạch tiếp theo (Khóa 2 - Industrial PLC Handshake & Deep Learning War Room):** 
+    - Luyện tập bắt tay PLC công nghiệp (Socket TCP/IP & Modbus) mô phỏng xung Trigger chụp ảnh và phản hồi kết quả OK/NG.
+    - Hoàn thiện bộ câu hỏi phỏng vấn thực chiến cho vị trí Kỹ sư R&D Vision tại Hyundai Kefico & Sejong Dynamics VINA.
+

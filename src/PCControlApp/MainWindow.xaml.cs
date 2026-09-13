@@ -1,23 +1,17 @@
-﻿using System.Text;
 using System.Windows;
-using System.Windows.Controls;
-using System.Windows.Data;
-using System.Windows.Documents;
-using System.Windows.Input;
-using System.Windows.Media;
-using System.Windows.Media.Imaging;
-using System.Windows.Navigation;
-using System.Windows.Shapes;
+using Wpf.Ui.Controls;
 
-namespace PCControlApp;
-
-/// <summary>
-/// Interaction logic for MainWindow.xaml
-/// </summary>
-public partial class MainWindow : Window
+namespace PCControlApp
 {
-    public MainWindow()
+    /// <summary>
+    /// Interaction logic for MainWindow.xaml
+    /// Kế thừa Wpf.Ui.Controls.FluentWindow chuẩn Windows 11 Fluent Design
+    /// </summary>
+    public partial class MainWindow : FluentWindow
     {
-        InitializeComponent();
+        public MainWindow()
+        {
+            InitializeComponent();
+        }
     }
 }
