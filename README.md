@@ -4,6 +4,8 @@ Automated Optical Inspection (AOI) and PC Control prototype built with **C# (.NE
 
 **Languages:** [English](README.md) | [Tiếng Việt](README_vi.md)
 
+![MVTec AD Metal Nut Anomaly Benchmark](docs/mvtec_metal_nut_anomaly_benchmark.png)
+
 ---
 
 ## Overview
@@ -98,8 +100,6 @@ Tested over 2,000 continuous inspection cycles (see [`docs/STRESS_TEST_REPORT.md
 | **Mean Cycle Time** | 30.96 ms | End-to-end processing per frame |
 | **P99 Latency** | 41.50 ms | Safe margin for PLC trigger sync |
 | **Memory Stability** | ~59.5 MB steady state | Zero unmanaged `Mat` memory leak |
-
-![MVTec AD Metal Nut Anomaly Benchmark](docs/mvtec_metal_nut_anomaly_benchmark.png)
 
 ---
 
