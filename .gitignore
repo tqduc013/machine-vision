@@ -17,10 +17,30 @@ venv/
 # Local crash logs
 *.log
 
-# Private Documents / Resumes / Reference CVs
+# Private Documents / Resumes / Reference CVs / Job Market Notes
 documents/
 docs/*CV*
 docs/*duc_cv*
+docs/BAO_CAO_TUYEN_DUNG*
+docs/COVER_LETTER*
+docs/hai_duong_hung_yen_job_market.md
+docs/aoi_anomaly_detection_roadmap_vi.md
+
+# Local Outputs, Generated Samples & Scratch Scripts
+output/
+output_chip/
+output_nut/
+outputs/
+samples/
+samples_chip/
+scripts/
+*.mp4
+*.html
+src/download_pcb_dataset.py
+src/generate_chip_samples.py
+src/generate_notebook.py
+src/generate_samples.py
+src/update_notebook_cell3.py
 
 # Build outputs and published binaries
 publish/

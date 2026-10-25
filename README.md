@@ -1,4 +1,4 @@
-# 👁️⚡ Industrial Machine Vision & PC Control Warfare System
+# 👁️⚡ Industrial Machine Vision & PC Control System
 
 > **High-Speed Automated Optical Inspection (AOI) & Real-Time PC Control Pipeline**  
 > Designed for **Semiconductor, Chip Inspection (Apple A18 / Micro-ICs), and Precision Manufacturing Lines**.  
@@ -31,9 +31,8 @@
   - **Thread 2 (Worker Pool):** FIFO Job Queue decoupled from networking to prevent memory leaks and zero UI freezing.
   - **Thread 3 (PLC I/O Handshake):** TCP Socket (`:5000`) signaling Bit `Y1=1` for pneumatic reject cylinder actuation.
   - **Thread 4 (Presentation):** Real-time WPF MVVM telemetry & WebSocket (`:8765`) broadcast to 3D Digital Twin.
-- 💡 **Optics & 5 Industrial Lighting Mastery:**
+- 💡 **Optics & 5 Industrial Lighting Modes:**
   - *Backlight* (Dimension Gauging), *Low-Angle Ring 15° Darkfield* (Scratch/Defect), *Coaxial 90° Beam Splitter* (Mirror/Specular), *Dome 360°* (Curved Surfaces), and *Hybrid Coaxial + Dome* (Complex Reflective Metal).
-  - Includes real-time 2D interactive photon ray-tracing simulator: [`lighting_simulator.html`](lighting_simulator.html).
 - 🖥️ **Native Industrial C# .NET 8 WPF Application (`PCControlApp`):**
   - Built with modern MVVM (`CommunityToolkit.Mvvm`), Dark-mode industrial IPC HUD, live camera stream, pass/fail LED indicators, and shift yield rate analytics.
 - 🔬 **AI Anomaly Detection Lab (PatchCore & Matrix Vectorization - 133x Speedup):**
@@ -41,10 +40,6 @@
   - Builds a 20,000-vector normalized Memory Bank from 50 golden PCB samples using real-world DeepPCB data.
   - SIMD matrix vectorization via $(A-B)^2 = A^2 - 2AB + B^2$ algebraic expansion: Reduces inference latency from **$66.54\text{s}$ down to $0.5\text{s}$ ($500\text{ms}$)**.
   - Generates full-resolution Jet Colormap anomaly heatmaps and overlays to localize micro open/short circuit defects.
-- 📝 **50-Question Master Sát Hạch Exam (`master_exam_50.html`):**
-  - Interactive 45-minute timed examination environment covering Optics, 4G Pipeline, PLC I/O, Multi-Threading, and Factory KPIs.
-- 📐 **Industrial Coordinate Visualizers (2D & 3D WebGL):**
-  - [`coordinate_visualizer.html`](coordinate_visualizer.html) & [`coordinate_visualizer_3d.html`](coordinate_visualizer_3d.html) for real-time pixel coordinate mapping, bounding boxes, and rotation transforms.
 
 ---
 
@@ -81,30 +76,29 @@
 
 ```tree
 Machine-Vision/
-├── .agents/                    # Specialized AI agent skills & guidelines
-├── output/                     # Production CSV logs & processed inspection images
-├── output_chip/                # 4G chip inspection result visual overlays
-├── samples/                    # Industrial sample images (Washer inspection)
-├── samples_chip/               # Apple A18 chip inspection samples (Tilted, OK, NG)
-├── src/                        # Source Code
-│   ├── 01_defect_and_dimension_inspector.py   # Baseline Washer AOI algorithm (~3ms)
+├── datasets/                   # Benchmark datasets (MVTec AD Metal Nut & DeepPCB)
+├── docs/                       # Technical Case Studies & Stress Test Reports
+│   ├── MVTEC_METAL_NUT_CASE_STUDY.md          # Hybrid Rule-based & AI Vision Case Study
+│   ├── STRESS_TEST_REPORT.md                  # 2,000-Cycle Endurance & Memory Benchmark
+│   └── mvtec_metal_nut_anomaly_benchmark.png  # Quantitative ROC & Latency Evaluation
+├── models/                     # Exported ONNX Runtime models & PatchCore Memory Bank
+├── notebooks/                  # Interactive R&D Jupyter Notebooks
+│   └── 05_ai_anomaly_detection_lab.ipynb      # PatchCore & SIMD Matrix Vectorization Lab
+├── src/                        # Core Source Code (C# .NET 8 & Python)
+│   ├── 01_defect_and_dimension_inspector.py   # Washer AOI baseline algorithm (~3ms)
 │   ├── 02_full_4g_pipeline_inspector.py       # Full 4G Pipeline Inspector (~10ms)
 │   ├── 03_plc_simulator.py                    # Industrial PLC TCP Socket Server (:5000)
 │   ├── 04_vision_pc_controller.py             # Multi-Threaded Engine & WebSocket Broadcast
-│   ├── generate_chip_samples.py               # Synthetic chip sample generator
-│   └── PCControlApp/                          # Native Industrial C# .NET 8 WPF App
-│       ├── Models/InspectionResult.cs         # DTO schema for inspection results
-│       ├── VisionEngine/ChipInspector.cs      # OpenCvSharp4 4G Pipeline implementation
-│       ├── ViewModels/MainViewModel.cs        # MVVM async coordinator
-│       ├── Views/MainWindow.xaml              # High-tech Dark Mode IPC XAML UI
-├── lighting_simulator.html     # Interactive 2D Photon Ray-Tracing Simulator
-├── anomaly_simulator.html      # Interactive Visualizer: Classic OpenCV vs AI PatchCore Heatmap
-├── pc_control_dashboard.html   # Real-Time 3D Digital Twin & Inspection Dashboard
-├── master_exam_50.html         # 45-Minute 50-Question Master Examination Simulator
-├── docs/                       # Technical Roadmaps & Career Market Analyses
-│   ├── aoi_anomaly_detection_roadmap_vi.md  # 80/20 Industrial Anomaly Detection Roadmap
-│   └── hai_duong_hung_yen_job_market.md    # Local Target Companies & High-Pay Vision Jobs
-├── AGENTS.md                   # Campaign War Log & Technical Strategy
+│   ├── 05_ai_anomaly_detector_interactive.py  # PatchCore Anomaly Detection Engine
+│   ├── 06_mvtec_metal_nut_anomaly_benchmark.py# MVTec AD Evaluation Pipeline
+│   ├── PCControlApp/                          # Native Industrial C# .NET 8 WPF App
+│   │   ├── Models/InspectionResult.cs         # DTO schema for inspection results
+│   │   ├── VisionEngine/ChipInspector.cs      # OpenCvSharp4 4G Chip Inspector
+│   │   ├── VisionEngine/MetalNutInspector.cs  # OpenCvSharp4 Metal Nut Inspector
+│   │   ├── VisionEngine/OnnxAnomalyInspector.cs # C# ONNX Runtime PatchCore Inspector
+│   │   ├── ViewModels/MainViewModel.cs        # MVVM async coordinator
+│   │   └── MainWindow.xaml                    # Industrial IPC WPF UI
+│   └── VisionBenchmark/                       # Automated 2,000-Cycle Stress Test Suite
 └── README.md                   # Project Documentation
 ```
 
@@ -155,10 +149,12 @@ dotnet run
 
 ---
 
-### 4. Interactive Simulation & Examination Tools
+### 4. Run 2,000-Cycle Stress & Memory Benchmark
 
-- **Lighting & Optics Ray-Tracing Simulator:** Open [`lighting_simulator.html`](lighting_simulator.html) in your browser to inspect 5 lighting modes with live photon animations.
-- **50-Question Timed Master Exam:** Open [`master_exam_50.html`](master_exam_50.html) to test your machine vision and PC control mastery in a 45-minute timed examination.
+```bash
+dotnet run --project src/VisionBenchmark/VisionBenchmark.csproj
+```
+*See detailed endurance results in [`docs/STRESS_TEST_REPORT.md`](docs/STRESS_TEST_REPORT.md) and [`docs/MVTEC_METAL_NUT_CASE_STUDY.md`](docs/MVTEC_METAL_NUT_CASE_STUDY.md).*
 
 ---
 

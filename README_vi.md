@@ -31,9 +31,8 @@
   - **Tầng 2 (Worker Pool):** Hàng đợi Queue cách ly luồng mạng với luồng xử lý ảnh, ngăn ngừa nghẽn luồng và đơ giao diện.
   - **Tầng 3 (PLC I/O Handshake):** Giao tiếp Socket TCP (`:5000`) điều khiển bật Bit `Y1=1` đẩy xi-lanh gạt phế phẩm.
   - **Tầng 4 (Presentation):** Đồng bộ dữ liệu lên C# WPF MVVM và phát sóng WebSocket (`:8765`) lên Bảng điều khiển Web 3D.
-- 💡 **Làm Chủ Quang Học & 5 Loại Đèn Chiếu Sáng Công Nghiệp:**
+- 💡 **Quang Học & 5 Chế Độ Chiếu Sáng Công Nghiệp:**
   - *Backlight* (Đo kích thước), *Low-Angle Ring 15° Darkfield* (Soi xước), *Coaxial 90° Beam Splitter* (Mặt phẳng gương), *Dome 360°* (Mặt cong bóng), và *Hybrid Coaxial + Dome* (Kim loại phức tạp).
-  - Tích hợp bộ mô phỏng hạt photon ray-tracing tương tác 2D: [`lighting_simulator.html`](lighting_simulator.html).
 - 🖥️ **Ứng Dụng Native C# .NET 8 WPF (`PCControlApp`):**
   - Viết bằng C# OpenCvSharp4 và kiến trúc MVVM (`CommunityToolkit.Mvvm`), Dark-mode IPC, hiển thị camera, đèn LED PASS/FAIL và tính toán Yield Rate theo ca.
 - 🔬 **Module AI Anomaly Detection (PatchCore & Vectorization Ma Trận Tăng Tốc ~133 Lần):**
@@ -41,10 +40,6 @@
   - Xây dựng Memory Bank 20.000 vectors chuẩn hóa từ 50 bo mạch OK của tập dữ liệu thực tế DeepPCB.
   - Tối ưu hóa ma trận song song SIMD qua hằng đẳng thức $(A-B)^2 = A^2 - 2AB + B^2$: Giảm thời gian suy luận từ **$66.54\text{s}$ xuống còn $0.5\text{s}$ ($500\text{ms}$)**.
   - Tự động sinh Heatmap màu trực quan (Jet Colormap) và Overlay khoanh vùng khuyết tật đứt mạch li ti.
-- 📝 **Hệ Thống Thi Sát Hạch 50 Câu Master Exam (`master_exam_50.html`):**
-  - Môi trường thi trắc nghiệm bấm giờ 45 phút, có bản đồ nhảy nhanh 50 câu và giải thích bản chất kỹ thuật chi tiết.
-- 📐 **Bộ Công Cụ Trực Quan Tọa Độ Công Nghiệp (2D & 3D WebGL):**
-  - [`coordinate_visualizer.html`](coordinate_visualizer.html) & [`coordinate_visualizer_3d.html`](coordinate_visualizer_3d.html) phân tích tọa độ pixel, bounding box và ma trận xoay góc thời gian thực.
 
 ---
 
@@ -118,12 +113,14 @@ dotnet run
 
 ---
 
-### 4. Công Cụ Mô Phỏng & Sát Hạch Trực Quan
+### 4. Kiểm Thử Chịu Tải 2.000 Chu Kỳ & Tài Liệu Kỹ Thuật
 
-- **Mô phỏng 5 loại đèn Quang học Ray-tracing:** Mở file [`lighting_simulator.html`](lighting_simulator.html).
-- **Mô phỏng So sánh Cổ điển vs AI Anomaly PatchCore:** Mở file [`anomaly_simulator.html`](anomaly_simulator.html).
-- **Phòng thi sát hạch 50 câu bấm giờ 45 phút:** Mở file [`master_exam_50.html`](master_exam_50.html).
-- **Bản đồ Cơ hội Việc làm Hải Dương & Hưng Yên:** Xem [`docs/hai_duong_hung_yen_job_market.md`](docs/hai_duong_hung_yen_job_market.md).
+- **Chạy Stress Test & Đo lường bộ nhớ C#:**
+  ```bash
+  dotnet run --project src/VisionBenchmark/VisionBenchmark.csproj
+  ```
+- **Báo cáo Kiểm thử Chịu tải 2.000 chu kỳ:** Xem [`docs/STRESS_TEST_REPORT.md`](docs/STRESS_TEST_REPORT.md).
+- **Hồ sơ Kỹ thuật MVTec AD Metal Nut:** Xem [`docs/MVTEC_METAL_NUT_CASE_STUDY.md`](docs/MVTEC_METAL_NUT_CASE_STUDY.md).
 
 ---
 

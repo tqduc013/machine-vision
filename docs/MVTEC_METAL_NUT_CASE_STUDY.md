@@ -1,8 +1,7 @@
-# 🏭 HỒ SƠ DỰ ÁN THỰC CHIẾN: HỆ THỐNG KIỂM ĐỊNH ĐAI ỐC CÔNG NGHIỆP MVTEC AD (PC CONTROL & AI VISION)
+# 🏭 TECHNICAL CASE STUDY: HỆ THỐNG KIỂM ĐỊNH ĐAI ỐC CÔNG NGHIỆP MVTEC AD (PC CONTROL & AI VISION)
 
 > **Tác giả:** Trần Quang Đức — Kỹ sư Khoa học Máy tính (Computer Science), UTEHY  
-> **Target ứng tuyển:** Kỹ sư R&D Machine Vision / PC Control (.NET WPF & AI Vision)  
-> **Mục tiêu chiến lược:** Thuyết phục tuyệt đối các công ty tự động hóa & FDI (Sejong Dynamics, Hyundai Kefico, RTC, Luxshare, Foxconn).
+> **Lĩnh vực:** Industrial Machine Vision, Automated Optical Inspection (AOI) & PC Control (.NET 8 WPF & ONNX Runtime)
 
 ---
 
@@ -45,7 +44,7 @@ Hệ thống được phát triển theo tiêu chuẩn công nghiệp chạy 24/
    └─────────────────────────────────────────────────────────────┘
 ```
 
-### Điểm nhấn kỹ thuật ăn điểm với nhà tuyển dụng (Key Highlights):
+### Điểm nhấn kỹ thuật (Key Engineering Highlights):
 1. **Kiến trúc MVVM phân tầng sạch sẽ:** `Models` (DTO), `ViewModels` (Điều phối luồng dữ liệu & thống kê), `Views` (XAML Dark Mode công nghiệp), `VisionEngine` (OpenCvSharp thuần thuật toán).
 2. **Quản lý bộ nhớ tuyệt đối (Zero Memory Leak):** Xử lý ảnh công nghiệp chạy liên tục hàng triệu frame mỗi ngày. Mọi đối tượng OpenCV `Mat` đều được giải phóng qua `using var Mat` và chuyển đổi sang `BitmapImage` bằng stream bộ nhớ đóng băng (`bitmap.Freeze()`), đảm bảo RAM IPC không bị tràn.
 3. **Mô phỏng Bắt tay PLC (Industrial Handshake):** Đồng bộ hóa tín hiệu I/O thông qua thông điệp TCP/IP chuẩn: gửi bit PASS sang PLC hoặc bit NG để kích hoạt van xi lanh gạt hàng lỗi vào thùng NG.
@@ -63,9 +62,9 @@ Hệ thống được phát triển theo tiêu chuẩn công nghiệp chạy 24/
 
 ---
 
-## 🧠 4. BÀI HỌC CHUYÊN SÂU: RULE-BASED VS. AI ANOMALY DETECTION
+## 🧠 4. SO SÁNH KIẾN TRÚC: RULE-BASED VS. AI ANOMALY DETECTION
 
-Khi đối thoại kỹ thuật với Trưởng phòng R&D hoặc Kỹ sư Trưởng (Lead Vision Engineer), đây là luận điểm thể hiện tư duy kiến trúc sư hệ thống:
+Phân tích lựa chọn giải pháp xử lý ảnh trong môi trường sản xuất công nghiệp:
 
 1. **Thế mạnh & Giới hạn của Rule-based (OpenCV):**
    - *Thế mạnh:* Cực kỳ nhanh ($< 20\text{ms}$), chuẩn xác $100\%$ cho bài toán định vị (Guidance) và đo kích thước (Gauging).

@@ -1,4 +1,4 @@
-﻿# 🏭 BÁO CÁO KIỂM THỬ CHỊU TẢI & ĐỘ BỀN CÔNG NGHIỆP (STRESS & ENDURANCE TEST)
+# 🏭 BÁO CÁO KIỂM THỬ CHỊU TẢI & ĐỘ BỀN CÔNG NGHIỆP (STRESS & ENDURANCE TEST)
 
 > **Hệ thống:** AOI Machine Vision PC Control (.NET 8 WPF • OpenCvSharp4)
 > **Kỹ sư thực hiện:** Trần Quang Đức (Khoa học Máy tính - UTEHY)
@@ -53,7 +53,7 @@ Biến động dung lượng RAM của tiến trình qua các mốc kiểm tra:
 
 ---
 
-## 🤝 4. ĐÁNH GIÁ SỰ SẴN SÀNG CHO NHÀ MÁY FDI (HYUNDAI KEFICO / SEJONG)
+## 🤝 4. KẾT LUẬN ĐÁNH GIÁ KỸ THUẬT
 
 1. **Tốc độ:** Với thông lượng **1936 sản phẩm/phút**, hệ thống dư sức gánh tải các dây chuyền dập đai ốc và linh kiện tự động hóa tốc độ cao.
 2. **Tính ổn định:** Tần suất Full GC (Gen 2) chỉ có **1 lần** trong suốt 2.000 sản phẩm, loại bỏ triệt để hiện tượng đứng hình (stuttering).
