@@ -99,6 +99,8 @@ Tested over 2,000 continuous inspection cycles (see [`docs/STRESS_TEST_REPORT.md
 | **P99 Latency** | 41.50 ms | Safe margin for PLC trigger sync |
 | **Memory Stability** | ~59.5 MB steady state | Zero unmanaged `Mat` memory leak |
 
+![MVTec AD Metal Nut Anomaly Benchmark](docs/mvtec_metal_nut_anomaly_benchmark.png)
+
 ---
 
 ## License

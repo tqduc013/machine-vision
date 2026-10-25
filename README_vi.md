@@ -99,6 +99,8 @@ Kết quả thực nghiệm qua 2.000 chu kỳ kiểm tra liên tiếp (chi ti�
 | **Độ trễ P99** | 41.50 ms | Đảm bảo đồng bộ tín hiệu PLC |
 | **Mức tiêu thụ RAM** | Ổn định ở ~59.5 MB | Không rò rỉ bộ nhớ (Zero Memory Leak) |
 
+![MVTec AD Metal Nut Anomaly Benchmark](docs/mvtec_metal_nut_anomaly_benchmark.png)
+
 ---
 
 ## Giấy Phép
