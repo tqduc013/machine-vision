@@ -1,149 +1,106 @@
-# 👁️⚡ Hệ Thống Thị Giác Máy Tính Công Nghiệp & PC Control
+# Hệ Thống Thị Giác Máy Tính & PC Control (Machine Vision & PC Control)
 
-> **Hệ thống Kiểm Tra Quang Học Tự Động (AOI) & Điều Khiển Máy Tính Công Nghiệp (IPC) Thời Gian Thực.**  
-> Ứng dụng kiểm tra ngoại quan linh kiện bán dẫn, vi mạch chip Apple A18 trên băng chuyền tốc độ cao.  
-> Xây dựng bằng **C# .NET 8 WPF, OpenCvSharp4, Python 3, Kiến Trúc Đa Luồng, Bắt Tay Socket PLC & Digital Twin 3D**.
+Dự án nghiên cứu và mô phỏng hệ thống Kiểm tra Quang học Tự động (AOI) kết hợp giao diện điều khiển máy tính công nghiệp (PC Control), xây dựng bằng **C# (.NET 8 WPF, OpenCvSharp4, ONNX Runtime)** và **Python (OpenCV, NumPy)**.
 
----
-
-[![.NET 8](https://img.shields.io/badge/.NET-8.0_LTS-512BD4?style=for-the-badge&logo=dotnet&logoColor=white)](https://dotnet.microsoft.com/)
-[![C# WPF](https://img.shields.io/badge/C%23-WPF_MVVM-239120?style=for-the-badge&logo=csharp&logoColor=white)](https://learn.microsoft.com/en-us/dotnet/desktop/wpf/)
-[![OpenCV](https://img.shields.io/badge/OpenCV-OpenCvSharp4-5C3EE8?style=for-the-badge&logo=opencv&logoColor=white)](https://github.com/shimat/opencvsharp)
-[![Python](https://img.shields.io/badge/Python-3.14-3776AB?style=for-the-badge&logo=python&logoColor=white)](https://www.python.org/)
-[![Three.js](https://img.shields.io/badge/Three.js-3D_Digital_Twin-black?style=for-the-badge&logo=threedotjs&logoColor=white)](https://threejs.org/)
-[![Tác giả](https://img.shields.io/badge/Tác_giả-tqduc013-38bdf8?style=for-the-badge&logo=github)](https://github.com/tqduc013)
-[![License](https://img.shields.io/badge/License-MIT-4ade80?style=for-the-badge)](LICENSE)
-
-**Ngôn ngữ:** [🇻🇳 Tiếng Việt](README_vi.md) · [🇬🇧 English](README.md)
+**Ngôn ngữ:** [English](README.md) | [Tiếng Việt](README_vi.md)
 
 ---
 
-## 🚀 Tính Năng & Vũ Khí Kỹ Thuật
+## Tổng Quan Dự Án
 
-- ⚡ **Tốc độ xử lý siêu tốc ($3 - 10\text{ ms} / \text{sản phẩm}$):** Đạt năng suất trên **$36.000\text{ UPH}$** (Sản phẩm/giờ) cho các dây chuyền nhà máy FDI.
-- 🎯 **Quy Trình Xử Lý Ảnh 4G Toàn Diện:**
-  1. **Guidance (Định vị & Xoay góc):** Tính toán tâm và góc nghiêng $\theta$ bằng `MinAreaRect`, tự động xoay ảnh về $0^\circ$ bằng `WarpAffine`.
-  2. **Identification (Nhận diện mã):** Đọc mã QR Code Serial laser (`SN-APPLE-A18-xxx`).
-  3. **Gauging (Đo kích thước):** Đo độ dày, chiều dài, chiều rộng với độ chính xác cao và kiểm tra dung sai ($\pm 15\text{px}$).
-  4. **Inspection (Soi khuyết tật):** Khoanh vùng ROI bắt chính xác vết xước bề mặt và lỗi sứt mẻ 4 góc.
-- 🧵 **Kiến Trúc Đa Luồng 4 Tầng Chuẩn Công Nghiệp (Producer-Consumer Queue):**
-  - **Tầng 1 (Acquisition):** Bắt tín hiệu Trigger từ cảm biến quang phần cứng.
-  - **Tầng 2 (Worker Pool):** Hàng đợi Queue cách ly luồng mạng với luồng xử lý ảnh, ngăn ngừa nghẽn luồng và đơ giao diện.
-  - **Tầng 3 (PLC I/O Handshake):** Giao tiếp Socket TCP (`:5000`) điều khiển bật Bit `Y1=1` đẩy xi-lanh gạt phế phẩm.
-  - **Tầng 4 (Presentation):** Đồng bộ dữ liệu lên C# WPF MVVM và phát sóng WebSocket (`:8765`) lên Bảng điều khiển Web 3D.
-- 💡 **Quang Học & 5 Chế Độ Chiếu Sáng Công Nghiệp:**
-  - *Backlight* (Đo kích thước), *Low-Angle Ring 15° Darkfield* (Soi xước), *Coaxial 90° Beam Splitter* (Mặt phẳng gương), *Dome 360°* (Mặt cong bóng), và *Hybrid Coaxial + Dome* (Kim loại phức tạp).
-- 🖥️ **Ứng Dụng Native C# .NET 8 WPF (`PCControlApp`):**
-  - Viết bằng C# OpenCvSharp4 và kiến trúc MVVM (`CommunityToolkit.Mvvm`), Dark-mode IPC, hiển thị camera, đèn LED PASS/FAIL và tính toán Yield Rate theo ca.
-- 🔬 **Module AI Anomaly Detection (PatchCore & Vectorization Ma Trận Tăng Tốc ~133 Lần):**
-  - Trích xuất đặc trưng đa tầng 3072 chiều từ lưới 400 patches ($32 \times 32\text{px}$).
-  - Xây dựng Memory Bank 20.000 vectors chuẩn hóa từ 50 bo mạch OK của tập dữ liệu thực tế DeepPCB.
-  - Tối ưu hóa ma trận song song SIMD qua hằng đẳng thức $(A-B)^2 = A^2 - 2AB + B^2$: Giảm thời gian suy luận từ **$66.54\text{s}$ xuống còn $0.5\text{s}$ ($500\text{ms}$)**.
-  - Tự động sinh Heatmap màu trực quan (Jet Colormap) và Overlay khoanh vùng khuyết tật đứt mạch li ti.
+Repository này bao gồm mã nguồn thực nghiệm và bộ kiểm thử hiệu năng cho các bài toán xử lý ảnh công nghiệp:
+
+- **Quy trình Xử lý ảnh 4G (Classical Computer Vision):**
+  - **Guidance (Định vị):** Xác định tâm và góc xoay sản phẩm (`MinAreaRect`, `HoughCircles`, `WarpAffine`).
+  - **Identification (Nhận diện):** Giải mã QR Code / DataMatrix trên linh kiện.
+  - **Gauging (Đo đạc):** Đo đường kính trong/ngoài và kiểm tra dung sai kích thước.
+  - **Inspection (Kiểm tra lỗi):** Phát hiện vết xước bề mặt, sứt mẻ góc và biến dạng hình học.
+- **Phát hiện Bất thường bằng AI (PatchCore Anomaly Detection + ONNX):**
+  - Trích xuất đặc trưng ảnh qua mạng CNN và đối chiếu với kho mẫu chuẩn (Memory Bank) trên tập dữ liệu `MVTec AD Metal Nut` và `DeepPCB`.
+  - Tính toán khoảng cách vector ma trận tạo bản đồ nhiệt (Heatmap) khoanh vùng vị trí lỗi.
+- **Ứng dụng Điều khiển C# WPF (`src/PCControlApp`):**
+  - Giao diện desktop viết bằng C# .NET 8 WPF theo mô hình MVVM.
+  - Hiển thị luồng kiểm tra ảnh, phán quyết `OK` / `NG`, thống kê tỉ lệ đạt (Yield Rate) và giả lập giao tiếp TCP/IP với PLC.
+- **Kiểm thử Chịu tải & Bộ nhớ (`src/VisionBenchmark`):**
+  - Chạy kiểm thử liên tục 2.000 chu kỳ để đo độ trễ (Latency) và kiểm chứng việc giải phóng bộ nhớ OpenCV `Mat` không gây rò rỉ RAM.
 
 ---
 
-## 🏗️ Sơ Đồ Kiến Trúc Hệ Thống 4 Tầng
+## Cấu Trúc Thư Mục
 
 ```text
-[ CẢM BIẾN QUANG ] ── (Tín hiệu Trigger) ──► [ HỘP ĐIỀU KHIỂN PLC ]
-                                                     │
-                                                     ▼ (Socket TCP :5000)
-┌─────────────────────────────────────────────────────────────────────────────┐
-│                       MÁY TÍNH CÔNG NGHIỆP VISION (IPC)                     │
-│                                                                             │
-│  [ TẦNG 1: THU NHẬN ẢNH ] ──► [ TẦNG 2: HÀNG ĐỢI QUEUE ]                   │
-│                                           │                                 │
-│                                           ▼                                 │
-│                              [ TẦNG 2: WORKER POOL 4G ]                     │
-│                              • 1. Guidance (Xoay góc θ)                     │
-│                              • 2. Identification (Đọc QR)                   │
-│                              • 3. Gauging (Đo kích thước)                   │
-│                              • 4. Inspection (Soi xước/mẻ)                  │
-│                                           │                                 │
-│                     ┌─────────────────────┴─────────────────────┐           │
-│                     ▼                                           ▼           │
-│         [ TẦNG 3: BẮT TAY PLC ]                     [ TẦNG 4: TRÌNH DIỄN UI]│
-│         • Bit Y0=1: Đạt (OK)                        • Ứng dụng C# .NET 8 WPF│
-│         • Bit Y1=1: Gạt rác (NG)                    • WebSocket (:8765)     │
-│         • Ghi sổ nhật ký CSV                        • Web 3D Digital Twin   │
-└─────────────────────────────────────────────────────────────────────────────┘
+Machine-Vision/
+├── datasets/                  # Dữ liệu mẫu (MVTec AD Metal Nut & DeepPCB)
+├── docs/                      # Tài liệu phân tích kỹ thuật & báo cáo benchmark
+│   ├── MVTEC_METAL_NUT_CASE_STUDY.md
+│   ├── STRESS_TEST_REPORT.md
+│   └── mvtec_metal_nut_anomaly_benchmark.png
+├── models/                    # Mô hình ONNX & dữ liệu Memory Bank
+├── notebooks/                 # Jupyter Notebook thử nghiệm thuật toán
+│   └── 05_ai_anomaly_detection_lab.ipynb
+├── src/
+│   ├── PCControlApp/          # Ứng dụng C# .NET 8 WPF PC Control
+│   ├── VisionBenchmark/       # Công cụ benchmark hiệu năng & bộ nhớ (2.000 chu kỳ)
+│   ├── 01_defect_and_dimension_inspector.py
+│   ├── 02_full_4g_pipeline_inspector.py
+│   ├── 03_plc_simulator.py
+│   ├── 04_vision_pc_controller.py
+│   ├── 05_ai_anomaly_detector_interactive.py
+│   └── 06_mvtec_metal_nut_anomaly_benchmark.py
+├── LICENSE
+└── README.md
 ```
 
 ---
 
-## ⚡ Hướng Dẫn Chạy Nhanh Dự Án
+## Hướng Dẫn Chạy Dự Án
 
-### 1. Cài đặt môi trường
-- **Python 3.10+:**
+### Yêu cầu môi trường
+
+- **.NET 8.0 SDK** (để chạy ứng dụng C# WPF và bộ công cụ Benchmark)
+- **Python 3.10+** (để chạy các script thử nghiệm thuật toán)
   ```bash
   pip install opencv-python numpy matplotlib websockets
   ```
-- **.NET 8 SDK (LTS):**
-  ```bash
-  winget install Microsoft.DotNet.SDK.8
-  ```
 
----
+### 1. Chạy ứng dụng C# WPF PC Control
 
-### 2. Chạy Hệ Thống Thực Tế (Python Backend + PLC + 3D Web)
-
-**Terminal 1 — Khởi động PLC Simulator:**
 ```bash
-python src/03_plc_simulator.py
+dotnet run --project src/PCControlApp/PCControlApp.csproj
 ```
 
-**Terminal 2 — Khởi động Vision PC Controller:**
+### 2. Chạy kiểm thử chịu tải 2.000 chu kỳ (Benchmark)
+
 ```bash
+dotnet run --project src/VisionBenchmark/VisionBenchmark.csproj
+```
+
+### 3. Chạy các script Python và giả lập PLC
+
+```bash
+# Terminal 1: Khởi động giả lập PLC qua cổng TCP (:5000)
+python src/03_plc_simulator.py
+
+# Terminal 2: Chạy bộ điều khiển xử lý ảnh Python
 python src/04_vision_pc_controller.py
 ```
 
-**Terminal 3 — Mở Giao diện Web 3D:**
-Mở file `pc_control_dashboard.html` trên trình duyệt để xem toàn bộ dây chuyền hoạt động thời gian thực!
+---
+
+## Kết Quả Đo Kiểm Hiệu Năng (MVTec AD Metal Nut)
+
+Kết quả thực nghiệm qua 2.000 chu kỳ kiểm tra liên tiếp (chi tiết tại [`docs/STRESS_TEST_REPORT.md`](docs/STRESS_TEST_REPORT.md)):
+
+| Chỉ số | Kết quả đo được | Ghi chú |
+| :--- | :--- | :--- |
+| **Tổng số chu kỳ** | 2.000 chu kỳ | Hoàn thành trong 61.98 giây |
+| **Thông lượng (Throughput)** | 32.3 FPS (~1.936 PPM) | Chạy trực tiếp trên CPU |
+| **Thời gian xử lý trung bình** | 30.96 ms / ảnh | Bao gồm toàn bộ quy trình xử lý |
+| **Độ trễ P99** | 41.50 ms | Đảm bảo đồng bộ tín hiệu PLC |
+| **Mức tiêu thụ RAM** | Ổn định ở ~59.5 MB | Không rò rỉ bộ nhớ (Zero Memory Leak) |
 
 ---
 
-### 3. Chạy Ứng Dụng Native C# .NET 8 WPF
+## Giấy Phép
 
-```bash
-cd src/PCControlApp
-dotnet run
-```
-*(Hoặc click đúp chuột trực tiếp vào file: `src/PCControlApp/bin/Debug/net8.0-windows/PCControlApp.exe`)*
-
----
-
-### 4. Kiểm Thử Chịu Tải 2.000 Chu Kỳ & Tài Liệu Kỹ Thuật
-
-- **Chạy Stress Test & Đo lường bộ nhớ C#:**
-  ```bash
-  dotnet run --project src/VisionBenchmark/VisionBenchmark.csproj
-  ```
-- **Báo cáo Kiểm thử Chịu tải 2.000 chu kỳ:** Xem [`docs/STRESS_TEST_REPORT.md`](docs/STRESS_TEST_REPORT.md).
-- **Hồ sơ Kỹ thuật MVTec AD Metal Nut:** Xem [`docs/MVTEC_METAL_NUT_CASE_STUDY.md`](docs/MVTEC_METAL_NUT_CASE_STUDY.md).
-
----
-
-## 📊 Bảng Đánh Giá Chỉ Số Thực Tế
-
-| Chỉ số kỹ thuật | Yêu cầu tiêu chuẩn | Đạt được trong dự án | Đánh giá |
-| :--- | :--- | :--- | :---: |
-| **Washer AOI Cycle Time** | $< 15\text{ ms}$ | **$2.8\text{ ms}$** | 🚀 Xuất Sắc |
-| **Apple A18 4G Pipeline Cycle Time** | $< 25\text{ ms}$ | **$8.5 - 11.2\text{ ms}$** | 🚀 Xuất Sắc |
-| **AI PatchCore Matrix Vectorization** | $< 2.0\text{ s}$ (400 patches vs 20k vec) | **$0.50\text{ s}$ ($500\text{ ms}$)** | ⚡ Đột Phá (x133) |
-| **Năng suất lý thuyết (Throughput)** | $> 10.000\text{ UPH}$ | **$> 36.000\text{ UPH}$** | 🚀 Xuất Sắc |
-| **Rò rỉ RAM khi chạy 24/7** | $0\text{ MB leak}$ | **$0\text{ MB leak}$** (`using var Mat`) | 🚀 Xuất Sắc |
-| **Thời gian biên dịch C# .NET 8** | $< 10\text{ s}$ | **$2.89\text{ s}$** | 🚀 Xuất Sắc |
-
----
-
-## 👨‍💻 Tác giả
-
-- **GitHub:** [@tqduc013](https://github.com/tqduc013)
-- **Repository:** [https://github.com/tqduc013/machine-vision](https://github.com/tqduc013/machine-vision)
-
----
-
-## 📜 Bản quyền
-
-Mã nguồn được phát hành theo giấy phép [MIT License](LICENSE).
+Dự án được phát hành theo giấy phép [MIT License](LICENSE).
