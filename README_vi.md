@@ -1,4 +1,4 @@
-# 👁️⚡ Hệ Thống Thị Giác Máy Tính Công Nghiệp & PC Control (Chiến Dịch Sportage)
+# 👁️⚡ Hệ Thống Thị Giác Máy Tính Công Nghiệp & PC Control
 
 > **Hệ thống Kiểm Tra Quang Học Tự Động (AOI) & Điều Khiển Máy Tính Công Nghiệp (IPC) Thời Gian Thực.**  
 > Ứng dụng kiểm tra ngoại quan linh kiện bán dẫn, vi mạch chip Apple A18 trên băng chuyền tốc độ cao.  
@@ -144,7 +144,6 @@ dotnet run
 
 - **GitHub:** [@tqduc013](https://github.com/tqduc013)
 - **Repository:** [https://github.com/tqduc013/machine-vision](https://github.com/tqduc013/machine-vision)
-- **Tên Chiến Dịch:** *Chiến Dịch Sportage — Machine Vision & Industrial PC Control Warfare*
 
 ---
 

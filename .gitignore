@@ -25,3 +25,8 @@ docs/*duc_cv*
 # Build outputs and published binaries
 publish/
 
+# AI Agent Instructions & Internal Strategy
+AGENTS.md
+.agents/
+
+

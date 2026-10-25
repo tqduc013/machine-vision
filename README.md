@@ -179,7 +179,6 @@ dotnet run
 
 - **GitHub:** [@tqduc013](https://github.com/tqduc013)
 - **Repository:** [https://github.com/tqduc013/machine-vision](https://github.com/tqduc013/machine-vision)
-- **Project Codename:** *Chiến Dịch Sportage — Machine Vision & Industrial PC Control Warfare*
 
 ---
 
